@@ -1,9 +1,6 @@
 ---
 applyTo: '**/*.lua'
 ---
-- Use `\%` syntax for percentage symbols in tooltips.
--- Note: Linters may highlight `\%` as an error, but this syntax renders properly in the game UI.
-
 ## Function Documentation Guidelines:
 - Use LuaLS/EmmyLua type annotations for all functions (---@param, ---@return, ---@type).
 - Include descriptive comments explaining what each function does.
