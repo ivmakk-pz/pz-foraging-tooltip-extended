@@ -1,15 +1,15 @@
 ﻿[h2]Overview[/h2]
-Enhance your foraging experience with detailed and customizable tooltips that provide a clear breakdown of all modifiers affecting your search radius. This mod is designed to help you understand and improve your foraging performance.
+Enhance your foraging experience with a detailed and customizable tooltip that provides a clear breakdown of all modifiers affecting your search radius. This mod is designed to help you understand and improve your foraging performance.
 
 [h2]Key Features[/h2]
 [list]
 [*] [b]Detailed Modifier Breakdown:[/b] Displays the exact effects of weather, darkness, exhaustion, and other modifiers on your search radius.
-[*] [b]Customizable Tooltip:[/b] Use Mod Options to toggle sections like formulas, min/max values, and zero penalties for a tailored experience.
-[*] [b]Live Game Data:[/b] Relies on in-game calculations and values used in vanilla tooltip, ensuring compatibility with other mods (unless they modify the same tooltip).
+[*] [b]Customizable Tooltip:[/b] Tailor the tooltip to your preferences using Mod Options, enabling or disabling sections such as a formula, minimum/maximum values, and zero-value modifiers and bonuses.
+[*] [b]Live Game Data:[/b] Relies on in-game calculations and values used in the vanilla tooltip, ensuring compatibility with other mods (unless they modify the same tooltip).
 [*] [b]Actionable Insights:[/b] Learn how to actively improve your search radius through traits, skills, and avoiding penalties.
-[*] [b]Highlights Min/Max Caps:[/b] Shows game's minimum and maximum caps for search radius values, helping you understand modifier limits.
-[*] [b]Category Visibility:[/b] Displays loot categories with zero chance, so you know what can’t be found in your current location.
-[*] [b]Clear Negative Modifiers:[/b] Highlights penalties in red for easy identification.
+[*] [b]Highlights Min/Max Caps:[/b] Shows the game's minimum and maximum caps for search radius values, helping you understand modifier limits.
+[*] [b]Category Visibility:[/b] Provides a comprehensive loot chance breakdown, including zero-bonus categories (optional), helping you identify items with better chances of discovery.
+[*] [b]Clear Negative Modifiers:[/b] Highlights penalties in red for quick and easy identification, ensuring you can address negative impacts effectively.
 [/list]
 
 [h2]Mod Options[/h2]
@@ -18,23 +18,23 @@ You can customize the behavior of this mod under [b]Menu -> Options -> Mods -> F
 [h3]Available Options:[/h3]
 [list]
 [*] [b]Show Formula:[/b] Display the formula used to calculate modifiers in the tooltip.
-[*] [b]Show Min/Max Values:[/b] Show theoretical minimum and maximum caps for search radius values.
-[*] [b]Show Vision Bonus Details:[/b] Display vision bonus details even when the modifier equals 1.
-[*] [b]Show Zero Penalties:[/b] Include penalties with a value of 0 in the tooltip.
+[*] [b]Show Min/Max Values:[/b] Show the game's minimum and maximum caps for search radius values.
+[*] [b]Show Vision Bonus Details:[/b] Display vision bonus details, which are based on crouching or aiming.
+[*] [b]Show Zero Penalties:[/b] Include penalties with no impact on the search radius (multipliers x1).
 [*] [b]Show Zero Trait Bonuses:[/b] Include trait/profession bonuses with a value of 0 in the tooltip.
 [/list]
 
-[h2]Why use this mod?[/h2]
-The default tooltip in the base game doesn’t show much helpful information. This mod shows you everything that affects your foraging vision and explains it clearly. It helps you to understand what works and what doesn’t, and get more from the foraging system.
+[h2]Why Use This Mod?[/h2]
+The default tooltip in the base game doesn’t show much helpful information. This mod shows you everything that affects your foraging vision and explains it clearly. It helps you understand what works and what doesn’t, allowing you to get more from the foraging system.
 
-[h2]Why I made this?[/h2]
+[h2]Why I Made This?[/h2]
 I created this mod because I’ve always enjoyed the foraging system as a reliable source of food and medical herbs since the early versions of Project Zomboid. However, the vanilla foraging tooltip in Build 42 felt confusing in some aspects — for example, the negative Weather Effect displayed as a red value at the top of the tooltip, while also appearing in the bonuses section as a green negative value. This dual representation made it unclear how modifiers interact.
 
 Additionally, I couldn’t find any working mods for Build 42 that addressed these issues, so I decided to create my own solution.
 
 [h2]Planned Features[/h2]
 [list]
-[*]Show if your clothing is helping or hurting your foraging radius.
+[*]Highlight wearable items or clothing that positively or negatively impact your search radius (e.g., face masks that reduce visibility).
 [*]Separate the base bonus (skills + traits) so you can see the details more clearly.
 [/list]
 
