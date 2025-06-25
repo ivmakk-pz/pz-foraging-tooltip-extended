@@ -1,8 +1,8 @@
-﻿# Chnagelog Guide
+﻿# Changelog Guide
 
 ## 1. Purpose
 - Use the file [CHANGELOG.md](../CHANGELOG.md) for tracking changes for newer version of the mod
-- Use semver for varison namin like 1.1.0
+- Use semver for version naming like 1.1.0
 - In your output explain that a changelog documents notable changes in chronological order.  
 - Emphasize that it is meant for humans (users and contributors), not machines.  
 
