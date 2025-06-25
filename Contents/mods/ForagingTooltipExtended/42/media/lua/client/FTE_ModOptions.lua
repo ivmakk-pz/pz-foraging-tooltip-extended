@@ -12,7 +12,32 @@ local FTE_Config = {
 local function FTE_ModOptionsConfig()
     -- Create the options object with unique ID
     local options = PZAPI.ModOptions:create("ForagingTooltipExtended", getText("UI_options_FTE_title"))
-          -- Add checkbox option to show 0 values in state penalties sub items
+    
+    -- Add checkbox option to show formula in tooltip
+    FTE_Config.showFormula = options:addTickBox(
+        "showFormula", 
+        getText("UI_options_FTE_showFormula"), 
+        true, 
+        getText("UI_options_FTE_showFormula_tooltip")
+    )
+    
+    -- Add checkbox option to show min and max values in tooltip
+    FTE_Config.showMinMaxValues = options:addTickBox(
+        "showMinMaxValues", 
+        getText("UI_options_FTE_showMinMaxValues"), 
+        false, 
+        getText("UI_options_FTE_showMinMaxValues_tooltip")
+    )
+    
+    -- Add checkbox option to show vision bonus details even when modifier = 1
+    FTE_Config.showVisionBonusDetails = options:addTickBox(
+        "showVisionBonusDetails", 
+        getText("UI_options_FTE_showVisionBonusDetails"), 
+        false, 
+        getText("UI_options_FTE_showVisionBonusDetails_tooltip")
+    )
+    
+    -- Add checkbox option to show 0 values in state penalties sub items
     FTE_Config.showZeroPenalties = options:addTickBox(
         "showZeroPenalties", 
         getText("UI_options_FTE_showZeroPenalties"), 
@@ -26,30 +51,6 @@ local function FTE_ModOptionsConfig()
         getText("UI_options_FTE_showZeroTraitBonuses"), 
         false, 
         getText("UI_options_FTE_showZeroTraitBonuses_tooltip")
-    )
-    
-    -- Add checkbox option to show min and max values in tooltip
-    FTE_Config.showMinMaxValues = options:addTickBox(
-        "showMinMaxValues", 
-        getText("UI_options_FTE_showMinMaxValues"), 
-        false, 
-        getText("UI_options_FTE_showMinMaxValues_tooltip")
-    )
-    
-    -- Add checkbox option to show formula in tooltip
-    FTE_Config.showFormula = options:addTickBox(
-        "showFormula", 
-        getText("UI_options_FTE_showFormula"), 
-        true, 
-        getText("UI_options_FTE_showFormula_tooltip")
-    )
-    
-    -- Add checkbox option to show vision bonus details even when modifier = 1
-    FTE_Config.showVisionBonusDetails = options:addTickBox(
-        "showVisionBonusDetails", 
-        getText("UI_options_FTE_showVisionBonusDetails"), 
-        false, 
-        getText("UI_options_FTE_showVisionBonusDetails_tooltip")
     )
 end
 

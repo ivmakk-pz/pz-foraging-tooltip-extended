@@ -1,0 +1,30 @@
+﻿[h2]Overview[/h2]
+This mod improves the default foraging tooltip and gives you a much clearer and more useful explanation of how your search radius is affected. It shows real in-game values instead of vague numbers and helps you understand how to get better results when foraging.
+
+[h2]Key Features[/h2]
+[list]
+[*]Shows exact effects of all modifiers (weather, darkness, tiredness, etc.) on your search radius.
+[*]Works with Mod Options — you can turn parts of the tooltip on or off depending on how much detail you want.
+[*]Uses live game data for most of values instead hardcoded calculations — this helps avoid problems with other mods (unless they change the same tooltip).
+[*]Helps you learn how to [i]increase[/i] your search radius by improving skills, picking the right traits, or avoiding penalties.
+[*]Shows theoretical minimum and maximum in-game caps for the search radius values so you know when a modifier no longer has an effect.
+[*]Displays loot categories that have zero chance — so you know what can’t be found in your current location.
+[*]Highlights negative modifiers clearly, so it’s easy to see what is making your radius smaller.
+[/list]
+
+[h2]Why use this mod?[/h2]
+The default tooltip in the base game doesn’t show much helpful information. This mod shows you everything that affects your foraging vision and explains it clearly. It helps you to understand what works and what doesn’t, and get more from the foraging system.
+
+[h2]Why I made this[/h2]
+I created this mod because I’ve always enjoyed the foraging system as a reliable source of food and medical herbs since the early versions of Project Zomboid. However, the vanilla foraging tooltip in Build 42 felt confusing in some aspects — for example, the negative Weather Effect displayed as a red value at the top of the tooltip, while also appearing in the bonuses section as a green negative value. This dual representation made it unclear how modifiers interact. Additionally, I couldn’t find any working mods for Build 42 that addressed these issues, so I decided to create my own solution.
+
+[h2]Planned Features[/h2]
+[list]
+[*]Show if your clothing is helping or hurting your foraging radius.
+[*]Separate the base bonus (skills + traits) so you can see the details more clearly.
+[/list]
+
+[h2]Feedback[/h2]
+If you have any ideas or suggestions, feel free to share them. I’d love to hear your thoughts and improve the mod further!
+
+[b]Tested and works with Build 42.9[/b]
