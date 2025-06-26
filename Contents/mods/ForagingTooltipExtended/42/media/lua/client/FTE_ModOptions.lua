@@ -6,6 +6,8 @@ local FTE_Config = {
     showMinMaxValues = nil,
     showFormula = nil,
     showVisionBonusDetails = nil,
+    showViewDistance = nil,
+    showZeroFoodDetection = nil,
 }
 
 -- Configuration function to set up mod options
@@ -43,6 +45,22 @@ local function FTE_ModOptionsConfig()
         getText("UI_options_FTE_showZeroPenalties"), 
         true, 
         getText("UI_options_FTE_showZeroPenalties_tooltip")
+    )
+
+    -- Add checkbox option to show view distance in tooltip
+    FTE_Config.showViewDistance = options:addTickBox(
+        "showViewDistance", 
+        getText("UI_options_FTE_showViewDistance"), 
+        true, 
+        getText("UI_options_FTE_showViewDistance_tooltip")
+    )
+    
+    -- Add checkbox option to show zero value for food detection
+    FTE_Config.showZeroFoodDetection = options:addTickBox(
+        "showZeroFoodDetection", 
+        getText("UI_options_FTE_showZeroFoodDetection"), 
+        false, 
+        getText("UI_options_FTE_showZeroFoodDetection_tooltip")
     )
 
     -- Add checkbox option to show 0 values in trait/profession bonuses
@@ -83,6 +101,16 @@ end
 -- Get whether to show vision bonus details even when modifier = 1
 function FTE_ModOptions.shouldShowVisionBonusDetails()
     return FTE_Config.showVisionBonusDetails and FTE_Config.showVisionBonusDetails:getValue() or false
+end
+
+-- Get whether to show view distance in tooltip
+function FTE_ModOptions.shouldShowViewDistance()
+    return FTE_Config.showViewDistance and FTE_Config.showViewDistance:getValue() or false
+end
+
+-- Get whether to show zero value for food detection
+function FTE_ModOptions.shouldShowZeroFoodDetection()
+    return FTE_Config.showZeroFoodDetection and FTE_Config.showZeroFoodDetection:getValue() or false
 end
 
 -- Get the raw config object (for advanced usage)
