@@ -13,7 +13,7 @@ This is the glowing overlay area around your character where foraging items can 
 [/list]
 
 [h3]Items View Distance[/h3]
-This determines how close you need to be to individual items within your search radius to actually spot them. [b]The vanilla game doesn't show this information at all.[/b] [i](Currently added in experimental way - beta feature)[/i]
+This determines how close you need to be to individual items within your search radius to actually spot them. [b]The vanilla game doesn't show this information at all.[/b]
 [list]
 [*] [b]What it does:[/b] Controls detection range for each specific item within the search radius
 [*] [b]Key difference:[/b] Each item type has different spot distances based on size and category
@@ -28,7 +28,7 @@ Both metrics share most modifiers (skills, traits, weather, lighting, equipment)
 [h2]Key Features[/h2]
 [list]
 [*] [b]Detailed Modifier Breakdown:[/b] Displays the exact effects of weather, darkness, exhaustion, and other modifiers on your search radius.
-[*] [b]View Distance Estimate:[/b] Shows an estimated distance you need to be from items to detect them, based on your current search radius.
+[*] [b]Items View Distance:[/b] Shows an estimated distance you need to be from items to detect them, based on your current search radius.
 [*] [b]Customizable Tooltip:[/b] Tailor the tooltip to your preferences using Mod Options, enabling or disabling sections such as a formula, minimum/maximum values, and zero-value modifiers and bonuses.
 [*] [b]Live Game Data:[/b] Relies on in-game calculations and values used in the vanilla tooltip, ensuring compatibility with other mods (unless they modify the same tooltip).
 [*] [b]Actionable Insights:[/b] Learn how to actively improve your search radius through traits, skills, and avoiding penalties.
@@ -46,8 +46,8 @@ You can customize the behavior of this mod under [b]Menu -> Options -> Mods -> F
 [*] [b]Show Min/Max Values:[/b] Show the game's minimum and maximum caps for search radius values.
 [*] [b]Show Vision Bonus Details:[/b] Display vision bonus details, which are based on crouching or aiming.
 [*] [b]Show Zero Penalties:[/b] Include penalties with no impact on the search radius (multipliers x1).
-[*] [b]Show Food Detection When Well-Fed:[/b] (NEW) Display the food detection section even when hunger bonus is 0% (disabled by default).
-[*] [b]Show View Distance Estimate:[/b] (NEW) Display an estimated distance you need to be from items to detect them.
+[*] [b]Show Food Detection When Well-Fed:[/b] Display the food detection section even when hunger bonus is 0% (disabled by default).
+[*] [b]Show Items View Distance:[/b] Display an estimated distance you need to be from items to detect them.
 [*] [b]Show Zero Trait Bonuses:[/b] Include trait/profession bonuses with a value of 0 in the tooltip.
 [/list]
 
