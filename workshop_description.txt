@@ -61,7 +61,7 @@ Additionally, I couldn’t find any working mods for Build 42 that addressed the
 
 [h2]Planned Features[/h2]
 [list]
-[*]Adding hunger bonus (WIP).
+[*][strike]Adding hunger bonus (WIP).[/strike] - Done in v1.1.0
 [*]Highlight wearable items or clothing that positively or negatively impact your search radius (e.g., face masks that reduce visibility).
 [*]Separate the base bonus (skills + traits) so you can see the details more clearly.
 [/list]
