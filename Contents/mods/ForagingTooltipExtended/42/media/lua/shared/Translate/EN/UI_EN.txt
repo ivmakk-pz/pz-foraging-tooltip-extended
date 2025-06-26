@@ -10,7 +10,7 @@ UI_FTE_EN = {
     UI_options_FTE_showFormula_tooltip = "When enabled, displays the radius calculation formula (A * B * C * D * E) in the tooltip",
     UI_options_FTE_showVisionBonusDetails = "Show Vision Bonus Details",
     UI_options_FTE_showVisionBonusDetails_tooltip = "When enabled, displays detailed breakdown for Best Vision Bonus even when modifier = 1 (no effect for radius)",
-    UI_options_FTE_showViewDistance = "Show View Distance Estimate",
+    UI_options_FTE_showViewDistance = "Show Items View Distance",
     UI_options_FTE_showViewDistance_tooltip = "When enabled, displays the estimated detection range for individual forageable items. This shows how close you need to be to actually spot specific items within your search radius",
     UI_options_FTE_showZeroFoodDetection = "Show Zero Food Detection Bonus",
     UI_options_FTE_showZeroFoodDetection_tooltip = "When enabled, displays the food detection bonus even when hunger bonus is 0 % (no bonus)",

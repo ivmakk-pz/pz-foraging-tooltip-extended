@@ -405,7 +405,7 @@ function ISZoneDisplay:getVisionTooltipText()
         if success and result and result ~= "" then
             return result
         else
-            print("[FTE] Extended tooltip failed, switching to original permanently: " .. tostring(result))
+			print("[FTE] Extended tooltip failed, switching to original permanently. Error: " .. tostring(result))
             hasExtendedTooltipFailed = true
             return originalGetVisionTooltipText(self)
         end
