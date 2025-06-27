@@ -1,4 +1,7 @@
-﻿## Steam Text Syntax to LLM Instruction Mapping
+﻿---
+applyTo: 'workshop_description.txt'
+---
+## Steam Text Syntax to LLM Instruction Mapping
 
 Source: [https://steamcommunity.com/comment/Guide/formattinghelp](https://steamcommunity.com/comment/Guide/formattinghelp)
 
