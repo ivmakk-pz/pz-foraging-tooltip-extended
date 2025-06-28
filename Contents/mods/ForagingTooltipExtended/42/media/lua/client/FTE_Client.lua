@@ -1,4 +1,4 @@
-local DEBUG_MODE = false
+local DEBUG_MODE = true
 
 local FTE_ModOptions = require "FTE_ModOptions"
 local FTE_Utils = require "FTE_Utils"
@@ -195,7 +195,7 @@ local function addFoodDetectionSection(character)
     
 	local result = " " .. Colors.white .. getText("IGUI_FTE_Food_Detection_Header") .. " (" .. getText("IGUI_StatsAndBody_Hunger") .. ")" .. " <LINE> "
 	
-	if hungerBonus > 1 then
+	if hungerBonus > 1.01 then
 		local bonusPercent = (hungerBonus - 1.0) * 100
 		result = result .. " " .. Colors.white .. "- " .. getText("IGUI_FTE_Food_Detection_Bonus") .. 
 				": <SPACE> " .. Colors.good .. "+" .. FTE_Utils.formatNumber(bonusPercent) .. "% <LINE> "
@@ -316,8 +316,8 @@ local function getVisionTooltipTextB429Extended(zoneDisplay)
 	end
 
     -- E. State Penalties detailed breakdown
-	if FTE_ModOptions.shouldShowZeroPenalties() then
-        table.insert(parts, buildPenaltiesText(modifiers, otherPenalties, true));
+	if FTE_ModOptions.shouldShowZeroPenalties() or math.abs(otherPenalties - 1) >= 0.01 then
+        table.insert(parts, buildPenaltiesText(modifiers, otherPenalties, FTE_ModOptions.shouldShowZeroPenalties()));
         table.insert(parts, " <LINE> ");
 	end
 

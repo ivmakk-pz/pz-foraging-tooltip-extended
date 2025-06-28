@@ -1,6 +1,13 @@
 ﻿# Changelog
 
 ## [Unreleased]
+### Changed
+- "Show Items View Distance" option is now disabled by default (search radius is more impactful for foraging)
+
+### Fixed
+- State Penalties section now appears when penalties are non-neutral, not just when "Show Zero Penalties" option is enabled
+- "Show Zero Penalties" option now properly filters individual penalty items instead of hiding the entire section
+- Food Detection bonus no longer incorrectly shows green color for zero/negligible values
 
 ## [1.1.1] - 2025-06-27
 ### Changed
