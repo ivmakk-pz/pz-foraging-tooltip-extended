@@ -1,68 +1,68 @@
-````instructions
 ---
 applyTo: '**/*.lua'
 ---
 ## Function Documentation Guidelines:
 - Use LuaLS/EmmyLua type annotations for all functions (---@param, ---@return, ---@type).
-- Include descriptive comments explaining what each function does.
-- Keep parameter and return descriptions concise - avoid verbose/redundant explanations.
-- If the function name/purpose is clear, don't repeat it in parameter descriptions.
-- Common parameters (character, searchManager, etc.) don't need detailed explanations each time.
+- **Avoid verbose/redundant comments** - if the purpose is obvious from function/variable names, don't repeat it.
+- **Don't duplicate information** between function description and @return annotation.
+- **Common parameters** (character, searchManager, etc.) don't need explanations each time they're used.
+- **Variable names should be self-explanatory** - avoid obvious descriptions like "The player character" for `player`.
+- **Keep annotations minimal but accurate** - focus on types rather than redundant descriptions.
 - If accurate types cannot be determined, use `unknown` as the type and notify about it.
-- Example:
+
+### Good Example (Concise):
 ```lua
----Calculates the vision bonus multiplier for foraging
+---Calculates vision bonus multiplier for foraging
 ---@param player IsoPlayer
 ---@param modifiers table
 ---@return number
 local function calculateVisionBonus(player, modifiers)
 ```
 
-## Mod Options Guidelines:
-- **DO NOT** automatically create new mod options or localizations unless explicitly requested by the user.
-- When implementing new features, focus only on the core functionality first.
-- Mod options and language entries should be created as a separate step when the user specifically asks for them.
-- When adding new mod options, don't add separators unless explicitly requested.
-- New option text labels and tooltips must be added to the language file (`UI_EN.txt`).
-- Use positive statements for option names (e.g., "Show X" instead of "Skip X" or "Hide X").
-- Follow the naming convention: `UI_options_FTE_<optionName>` for labels and `UI_options_FTE_<optionName>_tooltip` for tooltips.
-
-## Mod Options API Quick Reference:
+### Bad Example (Verbose/Redundant):
 ```lua
--- Create options object
-local options = PZAPI.ModOptions:create("ModID", getText("UI_options_title"))
+---Get view distance for a specific item size using cached icons and vanilla calculation
+---@param character IsoGameCharacter The player character
+---@param itemSize number The item size to calculate view distance for
+---@param searchManager ISSearchManager The search manager to use for vision calculation
+---@return number viewDistance The calculated view distance in tiles
+local function getViewDistance(character, itemSize, searchManager)
+```
 
--- Add formatting elements
-options:addTitle("Section Title")              -- Large header text
-options:addDescription("Description text")     -- Small description text
-options:addSeparator()                        -- Horizontal line
+## Inline Commenting Guidelines:
+- **Avoid obvious comments** - if the code is self-explanatory, don't comment it.
+- **Comment complex logic** - explain non-trivial algorithms, calculations, or business rules.
+- **Use comments to separate code blocks** in large functions for better readability.
+- **Focus on "why" not "what"** - explain the reasoning behind code, not what it literally does.
 
--- Add interactive options
-local checkbox = options:addTickBox("id", getText("label"), defaultValue, getText("tooltip"))
-local textField = options:addTextEntry("id", getText("label"), "defaultText", getText("tooltip"))
-local keybind = options:addKeyBind("id", getText("label"), Keyboard.KEY_Z, getText("tooltip"))
-local slider = options:addSlider("id", getText("label"), min, max, step, defaultValue, getText("tooltip"))
-local colorPicker = options:addColorPicker("id", getText("label"), r, g, b, a, getText("tooltip"))
-local button = options:addButton("id", getText("label"), getText("tooltip"), callbackFunction)
+### Good Examples:
+```lua
+-- Cache miss - calculate new view distance
+local viewDistance = calculateDistance(player, itemSize)
 
--- Dropdown/ComboBox
-local dropdown = options:addComboBox("id", getText("label"), getText("tooltip"))
-dropdown:addItem("Option 1", false)  -- Add dropdown items
-dropdown:addItem("Option 2", true)   -- true = initially selected
+-- Apply night vision penalty (reduced visibility in darkness)
+if isNight then
+    viewDistance = viewDistance * 0.7
+end
 
--- Multiple checkbox group
-local multiBox = options:addMultipleTickBox("id", getText("label"), getText("tooltip"))
-multiBox:addTickBox("Sub Option 1", false)   -- Use getValue(1) to get this value
-multiBox:addTickBox("Sub Option 2", true)    -- Use getValue(2) to get this value
+-- === TOOLTIP GENERATION === --
+local tooltipParts = {}
+-- ... tooltip building code ...
+```
 
--- Get option values
-local value = checkbox:getValue()     -- Returns boolean for checkbox
-local text = textField:getValue()     -- Returns string for text entry
-local key = keybind:getValue()        -- Returns keyboard key constant
-local number = slider:getValue()      -- Returns number within min/max range
-local color = colorPicker:getValue()  -- Returns table {r, g, b, a}
-local selected = dropdown:getValue()  -- Returns number (1-based index) for dropdown
-local sub1 = multiBox:getValue(1)     -- Returns boolean for first sub-checkbox
+### Bad Examples (Avoid):
+```lua
+-- Get the player
+local player = getPlayer()
+
+-- Set variable to true
+local isVisible = true
+
+-- Loop through items
+for i = 1, #items do
+    -- Get item at index i
+    local item = items[i]
+end
 ```
 
 ## Debugging and Error Handling Guidelines:
@@ -166,4 +166,3 @@ Use visual section separators for large files:
 **Typical sections**: Constants/Imports → Helper Functions → Main Logic → Exports/Overrides
 
 **Alternative styles**: `-` or `/` separators, but `=` is most visible and widely adopted.
-````

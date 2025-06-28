@@ -51,7 +51,7 @@ local function FTE_ModOptionsConfig()
     FTE_Config.showViewDistance = options:addTickBox(
         "showViewDistance", 
         getText("UI_options_FTE_showViewDistance"), 
-        true, 
+        false, 
         getText("UI_options_FTE_showViewDistance_tooltip")
     )
     

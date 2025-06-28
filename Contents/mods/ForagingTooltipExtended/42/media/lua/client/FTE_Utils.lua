@@ -167,6 +167,46 @@ function FTE_Utils.sortTooltipItems(items)
 end
 
 -- ===================================================================================================== --
+-- DEBUG FUNCTIONS
+-- ===================================================================================================== --
+
+local debugMarkers = {}
+local lastDebugCoords = {}
+
+---Draw debug circle at specified coordinates (for development purposes only)
+---@param x number
+---@param y number 
+---@param z number
+---@param radius number
+---@return unknown|nil marker The created marker or nil if failed
+function FTE_Utils.drawDebugCircle(x, y, z, radius)
+    -- Clean up previous markers if coordinates changed
+    if lastDebugCoords.x ~= x or lastDebugCoords.y ~= y or lastDebugCoords.z ~= z then
+        for _, marker in pairs(debugMarkers) do
+            if marker then
+                marker:remove();
+            end
+        end
+        debugMarkers = {};
+        lastDebugCoords = {x = x, y = y, z = z};
+    end
+    
+    local square = getCell():getGridSquare(x, y, z);
+    if square then
+        local marker = getIsoMarkers():addIsoMarker(
+            "media/textures/Foraging/pinIconBlank.png",
+            square,
+            1, 0.5, 0, 0.35  -- Orange color (R=1, G=0.5, B=0)
+        );
+        if marker then
+            marker:setCircleSize(radius);
+            table.insert(debugMarkers, marker);
+            return marker;
+        end
+    end
+end
+
+-- ===================================================================================================== --
 -- MODULE EXPORT
 -- ===================================================================================================== --
 
