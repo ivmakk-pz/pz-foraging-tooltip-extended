@@ -1,4 +1,4 @@
-local DEBUG_MODE = true
+local DEBUG_MODE = false
 
 local FTE_ModOptions = require "FTE_ModOptions"
 local FTE_Utils = require "FTE_Utils"

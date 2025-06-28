@@ -44,3 +44,9 @@ Based on https://keepachangelog.com/en/1.1.0/
 - Do not treat the changelog as a full git log history.  
 - Audit that every significant update (deprecation, removal, fix) is listed.  
 - Do not rely on regional date formats that can be ambiguous.
+
+## 7. Workshop Updates Synchronization
+- **Always maintain both files**: When updating CHANGELOG.md, also update the corresponding plain text version in `workshop_updates.txt`
+- **Consistency is critical**: Ensure entries in both files match in content and formatting
+- **Steam Workshop requirement**: The plain text version is used for Steam Workshop update descriptions, so it must be kept current
+- **Release workflow**: When moving entries from "Unreleased" to a new version in CHANGELOG.md, simultaneously create the corresponding version entry in workshop_updates.txt

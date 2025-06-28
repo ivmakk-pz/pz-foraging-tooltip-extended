@@ -66,6 +66,7 @@ Additionally, I couldn’t find any working mods for Build 42 that addressed the
 [*][strike]Adding hunger bonus[/strike] - Done in v1.1.0
 [*]Highlight wearable items or clothing that positively or negatively impact your search radius (e.g., face masks that reduce visibility).
 [*]Separate the base bonus (skills + traits) so you can see the details more clearly.
+[*]Show "pinned" key foraging stats without needing to open the tooltip each time (e.g., current Search Radius value displayed on screen).
 [/list]
 
 [h2]Compatibility[/h2]
