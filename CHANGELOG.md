@@ -1,6 +1,6 @@
 ﻿# Changelog
 
-## [1.1.2] - 2025-06-27
+## [1.1.2] - 2025-06-28
 ### Changed
 - "Show Items View Distance" option is now disabled by default (search radius is more impactful for foraging)
 
