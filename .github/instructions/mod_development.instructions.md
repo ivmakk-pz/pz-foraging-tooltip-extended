@@ -1,6 +1,21 @@
 ---
 applyTo: '**/*.lua'
 ---
+
+## Project Structure
+
+This workspace contains multiple directory structures with different purposes:
+
+### Main Development Directory
+- **`Contents/mods/ForagingTooltipExtended/`** - Our main code folder where all development work happens
+  - Contains your mod files and all new features, modifications, and implementations
+
+### Other Directories
+- **`workshop_assets/`** - Steam Workshop assets and metadata
+- **Root files** - Mod documentation and configuration (README.md, CHANGELOG.md, etc.)
+
+When developing features, always work in the `Contents/mods/ForagingTooltipExtended/` directory and reference any original mod code from `Contents_original_mod/` as needed (if applicable).
+
 ## Function Documentation Guidelines:
 - Use LuaLS/EmmyLua type annotations for all functions (---@param, ---@return, ---@type).
 - **Avoid verbose/redundant comments** - if the purpose is obvious from function/variable names, don't repeat it.
@@ -9,6 +24,52 @@ applyTo: '**/*.lua'
 - **Variable names should be self-explanatory** - avoid obvious descriptions like "The player character" for `player`.
 - **Keep annotations minimal but accurate** - focus on types rather than redundant descriptions.
 - If accurate types cannot be determined, use `unknown` as the type and notify about it.
+
+## Type Annotations for Vanilla Class Extensions:
+When hooking vanilla classes and adding custom fields, use proper type extensions instead of diagnostic suppressions:
+
+### Correct Approach (Type Extension):
+```lua
+-- Define extended type with custom fields
+---@class ISForageIconWithTooltip : ISForageIcon
+---@field tooltip ISToolTip|nil
+
+-- Use extended type in function signatures
+---@param self ISForageIconWithTooltip
+local function ISForageIcon_onMouseMove(self, dx, dy)
+    if not self.tooltip then
+        self.tooltip = ISToolTip:new()  -- No linter errors
+    end
+end
+```
+
+### Wrong Approach (Diagnostic Suppression):
+```lua
+-- AVOID: This pattern hides type information
+---@param self ISForageIcon
+local function ISForageIcon_onMouseMove(self, dx, dy)
+    ---@diagnostic disable-next-line: inject-field
+    if not self.tooltip then
+        ---@diagnostic disable-next-line: inject-field
+        self.tooltip = ISToolTip:new()
+    end
+end
+```
+
+### Type Casting for Return Values:
+When vanilla constructors return base types but you need specific type methods:
+```lua
+local tooltip = ISToolTip:new()  -- Returns ISBaseObject
+tooltip:initialise()
+---@cast tooltip ISToolTip  -- Cast to specific type
+tooltip:setDescription("text")  -- Now linter knows this method exists
+```
+
+**Benefits:**
+- Cleaner code without suppression comments
+- Proper type checking and IntelliSense
+- Self-documenting type extensions
+- Easier to maintain and understand
 
 ### Good Example (Concise):
 ```lua
@@ -166,3 +227,20 @@ Use visual section separators for large files:
 **Typical sections**: Constants/Imports → Helper Functions → Main Logic → Exports/Overrides
 
 **Alternative styles**: `-` or `/` separators, but `=` is most visible and widely adopted.
+
+## Testing Guidelines:
+- **No Automated Tests**: Avoid creating unit tests or automated test suites for this mod.
+- **In-Game Testing Preferred**: All functionality should be tested directly in Project Zomboid.
+- **Testing Instructions**: When implementing features, provide clear step-by-step instructions for manual testing in-game.
+- **Test Scenarios**: Include specific scenarios to test (items to use, actions to perform, expected results).
+- **Edge Cases**: Document edge cases that should be manually verified during gameplay.
+
+### Testing Instruction Format:
+When implementing a feature, include testing steps like:
+```
+## Testing Steps:
+1. Spawn items: [list specific items needed]
+2. Action: [describe what to do]
+3. Expected: [what should happen]
+4. Edge cases: [specific scenarios to verify]
+```

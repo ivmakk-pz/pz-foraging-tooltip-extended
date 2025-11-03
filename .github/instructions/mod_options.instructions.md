@@ -1,5 +1,5 @@
 ---
-applyTo: '**/FTE_ModOptions.lua'
+applyTo: '**/QFID_ModOptions.lua'
 ---
 
 ## Mod Options Guidelines:
@@ -9,7 +9,28 @@ applyTo: '**/FTE_ModOptions.lua'
 - When adding new mod options, don't add separators unless explicitly requested.
 - New option text labels and tooltips must be added to the language file (`UI_EN.txt`).
 - Use positive statements for option names (e.g., "Show X" instead of "Skip X" or "Hide X").
-- Follow the naming convention: `UI_options_FTE_<optionName>` for labels and `UI_options_FTE_<optionName>_tooltip` for tooltips.
+- Follow the naming convention: `UI_options_QFID_<optionName>` for labels and `UI_options_QFID_<optionName>_tooltip` for tooltips.
+
+## Mod Options Initialization:
+- **IMPORTANT**: Mod options must be initialized on `Events.OnCreateUI`, NOT `Events.OnGameStart`
+- The UI system must be fully loaded before PZAPI.ModOptions can create the options interface
+- Use a separate initialization function with pcall protection for error handling
+- Example pattern:
+```lua
+function YourMod.initModOptions()
+    local ok, err = pcall(function()
+        YourModOptions.initialize()
+    end)
+    
+    if not ok then
+        Utils.logError("[CLIENT-PROTECTION] ModOptions initialization failed: " .. tostring(err))
+        Utils.logInfo("[FALLBACK] ModOptions disabled - using hardcoded default values")
+    end
+end
+
+Events.OnGameStart.Add(YourMod.init)           -- Core mod initialization
+Events.OnCreateUI.Add(YourMod.initModOptions)  -- Mod options UI registration
+```
 
 ## Mod Options API Quick Reference:
 ```lua

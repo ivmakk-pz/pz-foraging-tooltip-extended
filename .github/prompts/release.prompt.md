@@ -1,7 +1,7 @@
 ﻿# Release Automation Prompt
 
 ## Instructions
-This prompt automates the release process for the Foraging Tooltip Extended mod. Execute these steps in order:
+This prompt automates the release process for your mod. Execute these steps in order:
 
 ## Step 1: Determine Release Version
 - **If on a release branch** (e.g., `release/1.2.1`): Extract version from branch name
@@ -19,11 +19,18 @@ This prompt automates the release process for the Foraging Tooltip Extended mod.
    - Ensure formatting matches the plain text changelog format (no markdown)
    - Use format: `v[VERSION] - YYYY-MM-DD`
 
+3. **Update common/ChangeLog.txt**:
+   - Add new version entry at the BOTTOM (oldest first for file order, displays newest first in-game)
+   - Use format: `[ v[VERSION] - YYYY-MM-DD ]`
+   - Include same content as CHANGELOG.md but without markdown formatting
+   - End entry with `[ ------ ]` separator
+
 ## Step 3: Update Version References
 Update version in these files:
 
 1. **mod.info**: Update `modversion=` field
 2. **README.md**: Update version badge `![Mod Version](https://img.shields.io/badge/Version-<VERSION>-blue)`
+3. **FTE_Utils.lua**: Update `FTE_Utils.MOD_VERSION` constant
 
 ## Step 4: Validation
 - Verify all files have consistent version numbers
