@@ -57,15 +57,46 @@ ForagingTooltipExtended/        # Root folder
 
 ## Technical Overview
 
+### Modular Architecture (v1.2.0+)
+
+The mod uses a modular architecture pattern with clear separation of concerns:
+
+```
+Contents/mods/ForagingTooltipExtended/42/media/lua/client/
+├── FTE_Client.lua                    # Main entry point (orchestrator)
+├── FTE_Utils.lua                     # Shared utilities (logging, colors, formatting)
+├── FTE_ModOptions.lua                # Configuration management
+│
+├── Core/
+│   └── FTE_ModuleBase.lua            # Base class for all feature modules
+│
+└── Modules/
+    ├── FTE_CoreTooltip.lua           # Core tooltip enhancements
+    ├── FTE_ViewDistance.lua          # View distance calculations (optional)
+    ├── FTE_SearchRadiusVisual.lua    # Visual radius display (future)
+    └── FTE_EquipmentImpact.lua       # Equipment analysis (future)
+```
+
+**Key Benefits:**
+- **Fault Isolation**: Module failures don't crash the entire mod
+- **Modularity**: Features can be toggled independently
+- **Maintainability**: Clear code organization and separation
+- **Extensibility**: Easy to add new features as modules
+
 ### Core Files
-- **FTE_Client.lua**: Main client-side logic that hooks into the foraging tooltip system
+- **FTE_Client.lua**: Slim entry point that initializes modules and manages lifecycle
+- **FTE_Utils.lua**: Shared utilities (logging with color formatting, helper functions)
 - **FTE_ModOptions.lua**: Handles mod configuration options and user preferences
+- **Core/FTE_ModuleBase.lua**: Base class providing lifecycle hooks and error handling for all modules
+- **Modules/FTE_CoreTooltip.lua**: Main tooltip enhancement logic (hooks into vanilla foraging system)
+- **Modules/FTE_ViewDistance.lua**: Optional view distance calculation system
 - **Translate files**: Localization strings for UI elements
 
-### Key Functions
-- `getVisionTooltipTextB429Extended()`: Main function that generates enhanced tooltip content
-- Color system using game's `getGoodHighlitedColor()` and `getBadHighlitedColor()`
-- Modifier calculation based on vanilla `ISSearchManager` methods
+### Key Functions & Patterns
+- **Module Pattern**: All features extend `FTE_ModuleBase` with consistent lifecycle (initialize, destroy, isActive)
+- **Safe Overrides**: Game function overrides wrapped in error handlers with fallback to vanilla
+- **Color System**: Uses game's `getGoodHighlitedColor()` and `getBadHighlitedColor()` for consistency
+- **Modifier Calculation**: Based on vanilla `ISSearchManager` methods for accuracy
 
 ## Development Setup
 
@@ -90,10 +121,20 @@ You can test modifications to Lua files without restarting the game by using the
 ## Technical Notes
 
 ### Compatibility Considerations
-- Hooks into vanilla foraging tooltip rendering
+- Modular architecture isolates failures to individual modules
+- Hooks into vanilla foraging tooltip rendering with safe overrides
 - Uses existing game color schemes for consistency
 - Minimal impact on game performance
 - Should be compatible with most other mods unless they modify the same tooltip hooks
+- Core functionality remains stable even if optional modules fail
+
+### Module System
+Each feature module:
+- Extends `FTE_ModuleBase` for consistent behavior
+- Can be enabled/disabled independently via mod options
+- Fails gracefully without breaking other features
+- Logs lifecycle events for debugging
+- Provides clean public API for inter-module communication
 
 ### Code Style
 - _WIP_
@@ -116,11 +157,29 @@ Options are stored in mod data and accessed via `FTE_ModOptions` module:
 
 ## Contributing
 
+### Architecture Guidelines
+- **Follow Module Pattern**: New features should be implemented as modules extending `FTE_ModuleBase`
+- **Place in Modules/**: All feature modules go in `Contents/mods/ForagingTooltipExtended/42/media/lua/client/Modules/`
+- **Use FTE_Utils**: Leverage shared utilities for logging and formatting
+- **Export Interface**: Always export `initialise`, `destroy`, `isActive`, `getInstance` functions
+- **Handle Errors**: Use pcall() for risky operations; fail gracefully
+
 ### Code Style Guidelines
-- Follow existing naming conventions
-- Add comments for complex calculations
+- Follow existing naming conventions (`FTE_` prefix for all classes/modules)
+- Add LuaLS/EmmyLua type annotations for functions
+- Use section separators for large files (`-- === SECTION NAME === --`)
+- Keep comments concise - focus on "why" not "what"
 - Test changes thoroughly before committing
 - Update CHANGELOG.md for any user-facing changes
+
+### Adding a New Module
+1. Create `Modules/FTE_YourFeature.lua` extending `FTE_ModuleBase`
+2. Implement `setupModule()` and any lifecycle hooks needed
+3. Export module interface (initialise, destroy, isActive, getInstance)
+4. Add initialization to `FTE_Client.lua`
+5. Add mod option toggle in `FTE_ModOptions.lua` (if applicable)
+6. Test with module enabled/disabled
+7. Document the module's purpose and API
 
 ### Submitting Changes
 1. Test mod functionality in-game

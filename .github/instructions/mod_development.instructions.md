@@ -10,11 +10,52 @@ This workspace contains multiple directory structures with different purposes:
 - **`Contents/mods/ForagingTooltipExtended/`** - Our main code folder where all development work happens
   - Contains your mod files and all new features, modifications, and implementations
 
+### Modular Architecture (as of v1.2.0)
+
+The mod follows a modular architecture pattern with clear separation of concerns:
+
+```
+Contents/mods/ForagingTooltipExtended/42/media/lua/client/
+├── FTE_Client.lua                    # Main entry point (slim orchestrator)
+├── FTE_Utils.lua                     # Logging, colors, formatting utilities
+├── FTE_ModOptions.lua                # Mod options configuration
+│
+├── Core/
+│   └── FTE_ModuleBase.lua            # Base class for all feature modules
+│
+└── Modules/
+    ├── FTE_CoreTooltip.lua           # Core tooltip enhancements (mandatory)
+    ├── FTE_ViewDistance.lua          # View distance calculations (optional)
+    ├── FTE_SearchRadiusVisual.lua    # Visual radius display (future)
+    └── FTE_EquipmentImpact.lua       # Equipment analysis (future)
+```
+
+**Key Components:**
+- **FTE_Client.lua**: Minimal entry point that initializes all modules and manages lifecycle
+- **FTE_Utils.lua**: Shared utilities (logging, colors, formatting) used across all modules
+- **FTE_ModOptions.lua**: Configuration management with per-module toggle support
+- **Core/FTE_ModuleBase.lua**: Base class providing lifecycle hooks, error handling, and state management
+- **Modules/**: Feature modules that extend ModuleBase and implement specific functionality
+
+**Module Pattern:**
+All feature modules follow this pattern:
+1. Extend `FTE_ModuleBase`
+2. Implement `setupModule()` for initialization
+3. Use lifecycle hooks (onPreStart, onStart, onPostStart)
+4. Export interface: `initialise()`, `destroy()`, `isActive()`, `getInstance()`
+5. Handle errors gracefully with fallback to disabled state
+
+**Benefits:**
+- **Modularity**: Features can be enabled/disabled independently
+- **Fault Isolation**: Module crashes don't break core functionality
+- **Maintainability**: Clear code organization and separation of concerns
+- **Extensibility**: Easy to add new feature modules following the pattern
+
 ### Other Directories
 - **`workshop_assets/`** - Steam Workshop assets and metadata
 - **Root files** - Mod documentation and configuration (README.md, CHANGELOG.md, etc.)
 
-When developing features, always work in the `Contents/mods/ForagingTooltipExtended/` directory and reference any original mod code from `Contents_original_mod/` as needed (if applicable).
+When developing features, always work in the `Contents/mods/ForagingTooltipExtended/` directory. New features should be implemented as modules in the `Modules/` folder extending `FTE_ModuleBase`.
 
 ## Function Documentation Guidelines:
 - Use LuaLS/EmmyLua type annotations for all functions (---@param, ---@return, ---@type).
@@ -244,3 +285,73 @@ When implementing a feature, include testing steps like:
 3. Expected: [what should happen]
 4. Edge cases: [specific scenarios to verify]
 ```
+
+## Module Development Guidelines
+
+### Creating a New Feature Module
+
+When adding new features, follow the established module pattern:
+
+1. **Create Module File**: Place in `Modules/FTE_YourFeature.lua`
+2. **Extend Base Class**: Inherit from `FTE_ModuleBase`
+3. **Implement Required Methods**:
+   - `setupModule()`: Initialize your feature
+   - Optionally override lifecycle hooks: `onPreStart()`, `onStart()`, `onPostStart()`
+4. **Export Interface**: Return `initialise`, `destroy`, `isActive`, `getInstance` functions
+5. **Register in Client**: Add module initialization to `FTE_Client.lua`
+6. **Add Mod Option**: Create toggle in `FTE_ModOptions.lua` if needed
+
+### Module Template
+
+```lua
+-- Modules/FTE_YourFeature.lua
+local FTE_ModuleBase = require "Core/FTE_ModuleBase"
+local FTE_Utils = require "FTE_Utils"
+
+local YourFeature = FTE_ModuleBase:derive("FTE_YourFeature")
+
+function YourFeature:setupModule()
+    FTE_Utils.logInfo("[YourFeature] Setting up...")
+    
+    -- Your initialization code here
+    
+    FTE_Utils.logInfo("[YourFeature] Setup complete")
+end
+
+-- Optional: Override lifecycle hooks if needed
+function YourFeature:onStart()
+    -- Called during initialization
+end
+
+-- Module instance
+local instance = YourFeature:new()
+
+-- Export module interface
+return {
+    initialise = function() return instance:initialise() end,
+    destroy = function() instance:destroy() end,
+    isActive = function() return instance:isActive() end,
+    getInstance = function() return instance end
+}
+```
+
+### Module Best Practices
+
+- **Fail Gracefully**: Use pcall() for risky operations; module crashes shouldn't break core functionality
+- **Log State Changes**: Use FTE_Utils logging functions to track module lifecycle
+- **Check Dependencies**: Verify required modules are active before using them
+- **Respect Mod Options**: Check if module is enabled before executing logic
+- **Document Public API**: Clearly define what other modules can call
+- **Handle Edge Cases**: Consider what happens when game objects are nil or invalid
+
+### Module Integration Checklist
+
+- [ ] Module extends `FTE_ModuleBase`
+- [ ] `setupModule()` implemented
+- [ ] Module exports interface (initialise, destroy, isActive, getInstance)
+- [ ] Added to `FTE_Client.lua` initialization sequence
+- [ ] Mod option toggle created (if applicable)
+- [ ] Dependencies documented
+- [ ] Error handling implemented
+- [ ] Logging added for key operations
+- [ ] Tested in-game with module enabled/disabled
