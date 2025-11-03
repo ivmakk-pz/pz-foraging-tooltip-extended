@@ -203,6 +203,13 @@ Options are stored in mod data and accessed via `FTE_ModOptions` module:
 
 See [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
 
+## Removed Features
+
+**Items View Distance** - Removed in v1.2.0 as it provided minimal value for most players. To restore this feature if needed:
+```bash
+git revert 7395469  # Commit that removed the feature
+```
+
 ## Support & Issues
 
 ### Reporting Bugs
