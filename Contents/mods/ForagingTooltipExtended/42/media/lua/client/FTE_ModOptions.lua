@@ -9,7 +9,6 @@ local FTE_Config = {
     showMinMaxValues = nil,
     showFormula = nil,
     showVisionBonusDetails = nil,
-    showViewDistance = nil,
     showZeroFoodDetection = nil,
     showPersistentRadius = nil,
 }
@@ -49,14 +48,6 @@ local function FTE_ModOptionsConfig()
         getText("UI_options_FTE_showZeroPenalties"), 
         true, 
         getText("UI_options_FTE_showZeroPenalties_tooltip")
-    )
-
-    -- Add checkbox option to show view distance in tooltip
-    FTE_Config.showViewDistance = options:addTickBox(
-        "showViewDistance", 
-        getText("UI_options_FTE_showViewDistance"), 
-        false, 
-        getText("UI_options_FTE_showViewDistance_tooltip")
     )
     
     -- Add checkbox option to show zero value for food detection
@@ -130,15 +121,6 @@ end
 function FTE_ModOptions.shouldShowVisionBonusDetails()
     if FTE_Config.showVisionBonusDetails then
         return FTE_Config.showVisionBonusDetails:getValue()
-    else
-        return false  -- Default disabled when not initialized
-    end
-end
-
--- Get whether to show view distance in tooltip
-function FTE_ModOptions.shouldShowViewDistance()
-    if FTE_Config.showViewDistance then
-        return FTE_Config.showViewDistance:getValue()
     else
         return false  -- Default disabled when not initialized
     end

@@ -6,9 +6,5 @@ IGUI_FTE_EN = {
     IGUI_FTE_SearchMode_Vision_Effect_Exhaustion = "Exhaustion",
     IGUI_FTE_SearchMode_Vision_Effect_Body_Damage = "Body Damage",
     IGUI_FTE_Food_Detection_Header = "Food Detection",
-    IGUI_FTE_Food_Detection_Bonus = "Food Vision Bonus",
-    IGUI_FTE_View_Distance_Header = "Items View Distance",
-    IGUI_FTE_View_Distance_Small = "Small Items (e.g. Herb)",
-    IGUI_FTE_View_Distance_Medium = "Medium Items (e.g. Stone)",
-    IGUI_FTE_View_Distance_Large = "Large Items (e.g. Log)"
+    IGUI_FTE_Food_Detection_Bonus = "Food Vision Bonus"
 }

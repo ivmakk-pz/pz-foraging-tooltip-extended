@@ -1,10 +1,9 @@
 -- FTE_CoreTooltip.lua - Core tooltip enhancement module
--- Provides detailed modifier breakdown, formula display, and view distance estimates
+-- Provides detailed modifier breakdown, formula display, and food detection info
 
 local FTE_ModuleBase = require("Core/FTE_ModuleBase")
 local FTE_Utils = require("FTE_Utils")
 local FTE_ModOptions = require("FTE_ModOptions")
-local FTE_ViewDistance = require("Modules/FTE_ViewDistance")
 
 -- ===================================================================================================== --
 -- MODULE CLASS DEFINITION
@@ -143,32 +142,6 @@ local function addFoodDetectionSection(character)
     return result
 end
 
----Generate view distance section showing how far the character can see different item sizes
----Uses the FTE_ViewDistance module if available and active
----@param character IsoGameCharacter
----@param searchManager ISSearchManager
----@return string
-local function addViewDistanceSection(character, searchManager)
-    -- Check if ViewDistance module is active
-    if not FTE_ViewDistance.isActive() then
-        return ""
-    end
-    
-    local viewDistances = FTE_ViewDistance.getAllViewDistances(character, searchManager)
-    
-    local parts = {
-        " ", Colors.white, getText("IGUI_FTE_View_Distance_Header"), " <LINE> ",
-        " ", Colors.white, "- ", getText("IGUI_FTE_View_Distance_Small"), ": <SPACE> ", 
-        Colors.good, FTE_Utils.formatNumber(viewDistances.small), " <LINE> ",
-        " ", Colors.white, "- ", getText("IGUI_FTE_View_Distance_Medium"), ": <SPACE> ", 
-        Colors.good, FTE_Utils.formatNumber(viewDistances.medium), " <LINE> ",
-        " ", Colors.white, "- ", getText("IGUI_FTE_View_Distance_Large"), ": <SPACE> ", 
-        Colors.good, FTE_Utils.formatNumber(viewDistances.large), " <LINE> "
-    }
-    
-    return table.concat(parts)
-end
-
 ---Builds the vision bonus details section for the tooltip
 ---@param _visionBonus number
 ---@param _modifiers table
@@ -265,12 +238,6 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
             table.insert(parts, penaltiesSection);
             table.insert(parts, " <LINE> ");
         end
-	end
-
-	-- Add view distance section if enabled
-	if FTE_ModOptions.shouldShowViewDistance() then
-		table.insert(parts, addViewDistanceSection(zoneDisplay.character, searchManager));
-		table.insert(parts, " <LINE> ");
 	end
 
 	-- Add food detection section
