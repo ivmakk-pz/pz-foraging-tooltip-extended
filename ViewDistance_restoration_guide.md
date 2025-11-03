@@ -1,71 +1,46 @@
 # ViewDistance Feature Restoration Guide
 
 ## Overview
-This guide explains how to restore the Items View Distance feature that was removed.
+This guide explains how to restore the Items View Distance feature that was removed in commit 7395469.
 
-## Files to Restore
+## Restoration Method
 
-### 1. Module File
-- **Location**: `Contents/mods/ForagingTooltipExtended/42/media/lua/client/Modules/FTE_ViewDistance.lua`
-- **Commit**: b501b01
-- **Description**: Core module for view distance calculations
-
-### 2. Client Integration
-- **File**: `Contents/mods/ForagingTooltipExtended/42/media/lua/client/FTE_Client.lua`
-- **Changes**:
-  - Add require: `local FTE_ViewDistance = require "Modules/FTE_ViewDistance"`
-  - Add initialization: `FTE_ViewDistance.initialise()`
-
-### 3. Mod Options
-- **File**: `Contents/mods/ForagingTooltipExtended/42/media/lua/client/FTE_ModOptions.lua`
-- **Changes**:
-  - Add config field: `showViewDistance = nil`
-  - Add option tickbox for showViewDistance
-  - Add function: `shouldShowViewDistance()`
-
-### 4. CoreTooltip Integration
-- **File**: `Contents/mods/ForagingTooltipExtended/42/media/lua/client/Modules/FTE_CoreTooltip.lua`
-- **Changes**:
-  - Add require: `local FTE_ViewDistance = require("Modules/FTE_ViewDistance")`
-  - Add function: `addViewDistanceSection(character, searchManager)`
-  - Add conditional call in tooltip generation with option check
-
-### 5. Translations
-- **File**: `Contents/mods/ForagingTooltipExtended/42/media/lua/shared/Translate/EN/UI_EN.txt`
-- **Add**:
-  - `UI_options_FTE_showViewDistance`
-  - `UI_options_FTE_showViewDistance_tooltip`
-
-- **File**: `Contents/mods/ForagingTooltipExtended/42/media/lua/shared/Translate/EN/IG_UI_EN.txt`
-- **Add**:
-  - `IGUI_FTE_View_Distance_Header`
-  - `IGUI_FTE_View_Distance_Small`
-  - `IGUI_FTE_View_Distance_Medium`
-  - `IGUI_FTE_View_Distance_Large`
-
-### 6. Documentation
-- **File**: `workshop_description.bbcode`
-- **Restore**: Items View Distance mentions in features and options
-
-## Restoration Commands
+Simply revert the removal commit:
 
 ```bash
-# 1. Restore the module file from git history
-git show b501b01:Contents/mods/ForagingTooltipExtended/42/media/lua/client/Modules/FTE_ViewDistance.lua > Contents/mods/ForagingTooltipExtended/42/media/lua/client/Modules/FTE_ViewDistance.lua
-
-# 2. Use the generated patch file
-git apply 0001-Added-Implement-ViewDistance-module-for-real-time-vi.patch
+# Revert the removal commit (creates a new commit that restores the feature)
+git revert 7395469
 ```
 
-## Manual Integration Steps
+Or cherry-pick the state before removal:
 
-1. Restore FTE_ViewDistance.lua module file
-2. Update FTE_Client.lua to require and initialize the module
-3. Update FTE_ModOptions.lua to add the option
-4. Update FTE_CoreTooltip.lua to use the module
-5. Add translation entries
-6. Update workshop description
+```bash
+# Cherry-pick the commit right before removal
+git cherry-pick 29ba859
+```
 
-## Reference Commit
-- ViewDistance Implementation: b501b01
+## Reference Commits
+- **Removal Commit**: `7395469` - Remove Items View Distance feature
+- **Last Working State**: `29ba859` - Save current changes before ViewDistance removal
+- **Original Implementation**: `b501b01` - Added: Implement ViewDistance module
+
+## What Gets Restored
+
+All code, options, translations, and documentation related to the Items View Distance feature will be restored, including:
+
+1. `FTE_ViewDistance.lua` module
+2. Client integration in `FTE_Client.lua`
+3. Mod option in `FTE_ModOptions.lua`
+4. Tooltip integration in `FTE_CoreTooltip.lua`
+5. All translation entries (UI_EN.txt, IG_UI_EN.txt)
+6. Workshop description updates
+
+## Verification
+
+After restoration, verify everything is back:
+
+```bash
+git status
+git log --oneline -3
+```
 
