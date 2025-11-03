@@ -24,19 +24,11 @@ local instance = FTE_CoreTooltip:new()
 
 local Colors = FTE_Utils.Colors
 
-local function formatFormulaValue(_letter, _value, _isAtMinRadius, _isAtMaxRadius)
-	if _isAtMinRadius or _isAtMaxRadius then
-		return Colors.grey .. _letter .. Colors.white;
-	else
-		return FTE_Utils.getRGBForValue(_value) .. _letter .. Colors.white;
-	end
-end
-
-local function buildFormulaString(_formulaData, _isAtMinRadius, _isAtMaxRadius)
+local function buildFormulaString(_formulaData)
 	local parts = {};
 	for i = 1, #_formulaData do
 		local data = _formulaData[i];
-		table.insert(parts, formatFormulaValue(data.letter, data.value, _isAtMinRadius, _isAtMaxRadius));
+		table.insert(parts, FTE_Utils.getRGBForValue(data.value) .. data.letter .. Colors.white);
 		if i < #_formulaData then
 			table.insert(parts, " <SPACE> * <SPACE> ");
 		end
@@ -50,8 +42,8 @@ end
 ---@param _shouldShowZeroPenalties boolean
 ---@return string
 local function buildPenaltiesText(_modifiers, _otherPenalties, _shouldShowZeroPenalties)
+	-- Removed clothing from this section - it now has its own F section
 	local penaltyItems = {
-		{modifier = _modifiers.clothingPenalty, textKey = "IGUI_SearchMode_Vision_Effect_Clothing"},
 		{modifier = _modifiers.exhaustionPenalty, textKey = "IGUI_FTE_SearchMode_Vision_Effect_Exhaustion"},
 		{modifier = _modifiers.panicPenalty, textKey = "IGUI_StatsAndBody_Panic"},
 		{modifier = _modifiers.bodyPenalty, textKey = "IGUI_FTE_SearchMode_Vision_Effect_Body_Damage"},
@@ -83,6 +75,46 @@ local function buildPenaltiesText(_modifiers, _otherPenalties, _shouldShowZeroPe
 	end
 	
 	return table.concat(parts);
+end
+
+---Builds the clothing effect section with vision-affecting items
+---@param _modifiers table
+---@param _character IsoPlayer The player character
+---@return string
+local function buildClothingEffectText(_modifiers, _character)
+	-- Only show section if clothing has an effect
+	if math.abs(_modifiers.clothingPenalty - 1) < 0.01 then
+		return ""
+	end
+	
+	local parts = {
+		" ", Colors.white, "F. ", getText("IGUI_SearchMode_Vision_Effect_Clothing"),
+		": <SPACE> ", FTE_Utils.getRGBForValue(_modifiers.clothingPenalty), FTE_Utils.formatNumber(_modifiers.clothingPenalty), " <LINE> "
+	}
+	
+	-- Add vision-affecting items if clothing penalty < 1.0
+	if _modifiers.clothingPenalty < 1.0 then
+		-- Check if VisionAffectingItems module is available and enabled
+		local FTE_VisionAffectingItems = nil
+		local status, module = pcall(require, "Modules/FTE_VisionAffectingItems")
+		if status and module and module.isActive and module.isActive() then
+			FTE_VisionAffectingItems = module
+		end
+		
+		-- Build items list with simple defaults (no mod options needed)
+		if FTE_VisionAffectingItems and _character then
+			local options = {
+				showZeroPenalty = false,  -- Only show items with actual penalties
+				sortMode = "severity"     -- Sort by penalty severity (highest first)
+			}
+			local itemsText = FTE_VisionAffectingItems.buildItemsList(_character, options)
+			if itemsText then
+				table.insert(parts, itemsText)
+			end
+		end
+	end
+	
+	return table.concat(parts)
 end
 
 ---@param character IsoGameCharacter
@@ -160,8 +192,8 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
 	local visionBonus = math.max(modifiers.aimBonus, modifiers.sneakBonus);
 	local darknessMultiplier = modifiers.lightPenalty;
 	local weatherPenalty = modifiers.weatherPenalty;
-	local otherPenalties = modifiers.panicPenalty * modifiers.bodyPenalty * modifiers.exhaustionPenalty * 
-	                      modifiers.clothingPenalty * modifiers.movementPenalty;
+	local otherPenalties = modifiers.panicPenalty * modifiers.bodyPenalty * modifiers.exhaustionPenalty * modifiers.movementPenalty;
+	local clothingPenalty = modifiers.clothingPenalty;
 	-- Check if current radius equals minimum or maximum radius
 	local isAtMinRadius = math.abs(visionRadius - searchManager.minRadius) < 0.01;
 	local isAtMaxRadius = math.abs(visionRadius - searchManager.maxRadiusCap) < 0.01;
@@ -169,17 +201,18 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
 	-- Add main radius text
 	table.insert(parts, FTE_Utils.getToolTipTextRadius(getText("IGUI_SearchMode_Vision_Effect_Radius"), visionRadius, isAtMinRadius, isAtMaxRadius));
     
-    -- Formula string
+    -- Formula string (A * B * C * D * E * F)
 	if FTE_ModOptions.shouldShowFormula() then
         local formulaData = {
             {letter = "A", value = baseRadius},
             {letter = "B", value = weatherPenalty},
             {letter = "C", value = darknessMultiplier},
             {letter = "D", value = visionBonus},
-            {letter = "E", value = otherPenalties}
+            {letter = "E", value = otherPenalties},
+            {letter = "F", value = clothingPenalty}
         };
 
-		table.insert(parts, buildFormulaString(formulaData, isAtMinRadius, isAtMaxRadius));
+		table.insert(parts, buildFormulaString(formulaData));
 	end
 
     -- Add modifiers section
@@ -193,6 +226,7 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
 	table.insert(parts, FTE_Utils.getToolTipTextSubValue("[C] " .. getText("IGUI_SearchMode_Vision_Effect_Darkness"), darknessMultiplier, "", "- "));
 	table.insert(parts, FTE_Utils.getToolTipTextSubValue("[D] " .. getText("IGUI_FTE_SearchMode_Vision_Effect_Best_Vision_Bonus"), visionBonus, "", "- "));
 	table.insert(parts, FTE_Utils.getToolTipTextSubValue("[E] " .. getText("IGUI_FTE_SearchMode_Vision_Effect_State_Penalties"), otherPenalties, "", "- "));
+	table.insert(parts, FTE_Utils.getToolTipTextSubValue("[F] " .. getText("IGUI_SearchMode_Vision_Effect_Clothing"), clothingPenalty, "", "- "));
 	table.insert(parts, " <LINE> ");
     
     -- D. Best Vision Bonus detailed breakdown
@@ -208,6 +242,13 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
             table.insert(parts, penaltiesSection);
             table.insert(parts, " <LINE> ");
         end
+	end
+
+	-- F. Clothing Effect with vision-affecting items
+	local clothingSection = buildClothingEffectText(modifiers, zoneDisplay.character)
+	if clothingSection and clothingSection ~= "" then
+		table.insert(parts, clothingSection);
+		table.insert(parts, " <LINE> ");
 	end
 
 	-- Add food detection section

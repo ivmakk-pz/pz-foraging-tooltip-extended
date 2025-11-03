@@ -9,16 +9,17 @@ E. State Penalties: 0.93
 ├─ Exhaustion: 0.93
 ├─ Panic: 1.00
 ├─ Body Damage: 1.00
-├─ Movement: 1.00
-└─ Clothing: 0.75              ← MOVED TO LAST
-   ├─ [Icon] Gas Mask: 0.50x          ← NEW level 2 item (use "--" prefix)
-   ├─ [Icon] Sunglasses: 0.98x        ← NEW level 2 item (use "--" prefix)
-   └─ [Icon] Riot Helmet: 0.75x       ← NEW level 2 item (use "--" prefix)
+└─ Movement: 1.00
+
+F. Clothing Effect: 0.75              ← NEW SECTION
+├─ [Icon] Gas Mask: 0.50              ← Level 1 item (use "-" prefix)
+├─ [Icon] Sunglasses: 0.98            ← Level 1 item (use "-" prefix)
+└─ [Icon] Riot Helmet: 0.75           ← Level 1 item (use "-" prefix)
 ```
 
 **Key Design Decisions**: 
-1. **Clothing is last** in E. State Penalties section to allow expansion without pushing other penalties down
-2. Items appear as sub-entries under "Clothing" line using **"--"** prefix for level 2 indentation (spaces don't render)
+1. **Clothing is separate F section** to allow clean level 1 item display
+2. Items appear as level 1 entries directly under "F. Clothing Effect" using **"-"** prefix
 3. Only shown when clothing penalty < 1.00 (vision-affecting items are worn)
 
 ---
@@ -75,20 +76,20 @@ E. State Penalties: 0.93
 **File**: `FTE_VisionAffectingItems.lua` (new module)
 
 #### Task 1.1: Create Base Module Structure
-- [ ] Create new module class extending `FTE_ModuleBase`
-- [ ] Add module registration in `FTE_Client.lua`
-- [ ] Follow existing module patterns (FTE_CoreTooltip, FTE_ViewDistance)
+- [x] Create new module class extending `FTE_ModuleBase`
+- [x] Add module registration in `FTE_Client.lua`
+- [x] Follow existing module patterns (FTE_CoreTooltip, FTE_ViewDistance)
 
 #### Task 1.2: Implement Worn Items Detection
-- [ ] Create function `getVisionAffectingItems(character)`
+- [x] Create function `getVisionAffectingItems(character)`
   - Get all worn items: `character:getWornItems()`
   - Filter items with clothing location penalties
   - Return table with: `{item, location, penaltyPercent, multiplier}`
 
 #### Task 1.3: Add Sorting Logic
-- [ ] Sort items by penalty severity (highest first)
-- [ ] Optionally group by item type (headwear, eyewear, etc.)
-- [ ] Handle edge cases (no items, all items zero penalty)
+- [x] Sort items by penalty severity (highest first)
+- [x] Optionally group by item type (headwear, eyewear, etc.)
+- [x] Handle edge cases (no items, all items zero penalty)
 
 **Example Data Structure**:
 ```lua
@@ -110,10 +111,10 @@ E. State Penalties: 0.93
 **File**: `FTE_VisionAffectingItems.lua` (continued)
 
 #### Task 2.1: Implement Icon + Text Formatter
-- [ ] Create function `buildItemsList(character)`
-- [ ] Return formatted string for level 2 items
-- [ ] Use proper indentation: **"--"** prefix (spaces don't render in rich text)
-- [ ] Format: `"-- <IMAGE:icon> ItemName: X.XXx <LINE> "`
+- [x] Create function `buildItemsList(character)`
+- [x] Return formatted string for level 2 items
+- [x] Use proper indentation: **"--"** prefix (spaces don't render in rich text)
+- [x] Format: `"-- <IMAGE:icon> ItemName: X.XXx <LINE> "`
   ```lua
   local parts = {}
   for _, data in ipairs(itemsData) do
@@ -131,17 +132,15 @@ E. State Penalties: 0.93
 **Important**: Use `"--"` not `"  - "` because leading spaces are stripped in rich text rendering
 
 #### Task 2.2: Add Color Coding Logic
-- [ ] Implement `getColorForPenalty(penaltyPercent)`
-  - Green (good): 0-10% penalty
-  - Yellow (moderate): 10-30% penalty
-  - Orange (high): 30-60% penalty
-  - Red (severe): 60%+ penalty
-- [ ] Use FTE_Utils color constants where appropriate
+- [x] Implement `getColorForPenalty(penaltyPercent)`
+  - Red (bad): Penalty > 0% (negative effect on vision)
+  - Green (good): Penalty <= 0% (positive effect on vision, if any exist)
+- [x] Use FTE_Utils existing color constants (good/bad)
 
 #### Task 2.3: Handle Zero/Minimal Penalties
-- [ ] Add mod option toggle: "Show items with zero penalty"
-- [ ] Filter out items < 1% penalty by default
-- [ ] Allow users to see all worn items if enabled
+- [x] Filter out items with no effect (< 0.01% penalty)
+- [x] Only show items that actually affect vision
+- [x] Support showZeroPenalty option for debugging/testing if needed
 
 ---
 
@@ -149,12 +148,12 @@ E. State Penalties: 0.93
 **File**: `FTE_CoreTooltip.lua` (modifications)
 
 #### Task 3.1: Add Hook Point in Penalties Section
-- [ ] Modify `buildPenaltiesText()` to reorder penalty items
-- [ ] **Move clothing to last position** in the penalty list
-- [ ] Insert level 2 items immediately after "Clothing: X.XX" line
-- [ ] Use **"--"** prefix for level 2 indentation (not spaces)
-- [ ] Call new module's `buildItemsList()` function
-- [ ] Only show items when clothing penalty < 1.00
+- [x] Modify `buildPenaltiesText()` to reorder penalty items
+- [x] **Move clothing to last position** in the penalty list
+- [x] Insert level 2 items immediately after "Clothing: X.XX" line
+- [x] Use **"--"** prefix for level 2 indentation (not spaces)
+- [x] Call new module's `buildItemsList()` function
+- [x] Only show items when clothing penalty < 1.00
 
 **Implementation Steps**:
 1. Reorder `penaltyItems` array in `buildPenaltiesText()`:
@@ -183,10 +182,16 @@ E. State Penalties: 0.93
 
 #### Task 3.2: Add Mod Options
 **File**: `FTE_ModOptions.lua`
-- [ ] Add toggle: "Show Vision-Affecting Items" (default: OFF)
-- [ ] Add toggle: "Show Items with Zero Penalty" (default: OFF)
-- [ ] Add option: "Sort Order" (Severity/Name/Type)
-- [ ] Add localization keys to translation files
+- [x] ~~Add toggle: "Show Vision-Affecting Items" (default: OFF)~~ **REMOVED - Feature always enabled**
+- [x] ~~Add toggle: "Show Items with Zero Penalty" (default: OFF)~~ **REMOVED - Hardcoded to false**
+- [x] ~~Add option: "Sort Order" (Severity/Name/Type)~~ **REMOVED - Hardcoded to "severity"**
+- [x] ~~Add localization keys to translation files~~ **REMOVED - Not needed**
+
+**Decision**: Removed all mod options to keep the feature simple and non-overwhelming. The feature now:
+- Always shows when clothing penalty < 1.0 (vision-affecting items are worn)
+- Only shows items with actual penalties (showZeroPenalty = false)
+- Always sorts by severity (highest penalty first)
+- No user configuration needed
 
 #### Task 3.3: Performance Optimization
 - [ ] Cache item icons on first access

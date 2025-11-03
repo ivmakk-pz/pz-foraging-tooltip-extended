@@ -5,6 +5,7 @@ local FTE_Utils = require "FTE_Utils"
 local FTE_ModOptions = require "FTE_ModOptions"
 local FTE_CoreTooltip = require "Modules/FTE_CoreTooltip"
 local FTE_SearchRadiusDisplay = require "Modules/FTE_SearchRadiusDisplay"
+local FTE_VisionAffectingItems = require "Modules/FTE_VisionAffectingItems"
 
 -- ===================================================================================================== --
 -- INITIALIZATION
@@ -20,6 +21,9 @@ function ForagingTooltipExtended.init()
     
     -- Initialize SearchRadiusDisplay module
     FTE_SearchRadiusDisplay.initialise()
+    
+    -- Initialize VisionAffectingItems module
+    FTE_VisionAffectingItems.initialise()
     
     FTE_Utils.logInfo("Client initialization complete")
 end

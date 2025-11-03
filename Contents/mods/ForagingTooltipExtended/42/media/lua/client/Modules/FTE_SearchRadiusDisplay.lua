@@ -41,7 +41,7 @@ local UI_BORDER_SPACING = 6
 ---Background padding constants for text display
 local BG_PADDING_X = 3  -- Horizontal padding around text
 local BG_PADDING_Y = -2  -- Vertical padding around text (0 for tight fit)
-local BG_ALPHA = 0.7    -- Background opacity (70%)
+local BG_ALPHA = 0.8    -- Background opacity (70%)
 
 -- ===================================================================================================== --
 -- COLOR HELPER FUNCTIONS
