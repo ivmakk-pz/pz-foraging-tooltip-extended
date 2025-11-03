@@ -6,12 +6,72 @@ local FTE_Utils = {}
 -- ===================================================================================================== --
 -- CONSTANTS
 -- ===================================================================================================== --
+
+-- Mod version - Update this during release process
+FTE_Utils.MOD_VERSION = "1.1.2"
+
 local PRECISION_THRESHOLD = 0.01
 local PERCENTAGE_MULTIPLIER = 100
+
+-- Debug mode flag
+local DEBUG_MODE = false
 
 -- Get game colors once at module load
 local GHC = getCore():getGoodHighlitedColor()
 local BHC = getCore():getBadHighlitedColor()
+
+-- ===================================================================================================== --
+-- LOGGING FUNCTIONS
+-- ===================================================================================================== --
+
+---Core logging function
+---@param message string
+---@param level string
+local function logMessage(message, level)
+    if not DEBUG_MODE and level == "DEBUG" then
+        return
+    end
+    
+    -- Ensure message is always a string
+    local safeMessage = message
+    if type(message) ~= "string" then
+        safeMessage = tostring(message)
+    end
+    
+    -- Build complete log line
+    local logLine = "[FTE] " .. level .. " " .. safeMessage
+    print(logLine)
+end
+
+---Log info message
+---@param message string
+function FTE_Utils.logInfo(message)
+    logMessage(message, "INFO")
+end
+
+---Log warning message
+---@param message string
+function FTE_Utils.logWarning(message)
+    logMessage(message, "WARN")
+end
+
+---Log error message
+---@param message string
+function FTE_Utils.logError(message)
+    logMessage(message, "ERROR")
+end
+
+---Log debug message
+---@param message string
+function FTE_Utils.logDebug(message)
+    logMessage(message, "DEBUG")
+end
+
+---Set debug mode
+---@param enabled boolean
+function FTE_Utils.setDebugMode(enabled)
+    DEBUG_MODE = enabled
+end
 
 -- ===================================================================================================== --
 -- COLOR DEFINITIONS

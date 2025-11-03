@@ -1,4 +1,7 @@
 -- Foraging Tooltip Extended Mod Options
+
+local FTE_Utils = require("FTE_Utils")
+
 -- Storage array for all of our options
 local FTE_Config = {
     showZeroPenalties = nil,
@@ -72,45 +75,73 @@ local function FTE_ModOptionsConfig()
     )
 end
 
--- Initialize the mod options
-FTE_ModOptionsConfig()
+-- ===================================================================================================== --
+-- OPTION ACCESS FUNCTIONS
+-- ===================================================================================================== --
 
--- Getter functions for easier access to option values
 local FTE_ModOptions = {}
 
 -- Get whether to show zero values in trait/profession bonuses
 function FTE_ModOptions.shouldShowZeroTraitBonuses()
-    return FTE_Config.showZeroTraitBonuses and FTE_Config.showZeroTraitBonuses:getValue() or false
+    if FTE_Config.showZeroTraitBonuses then
+        return FTE_Config.showZeroTraitBonuses:getValue()
+    else
+        return false  -- Default disabled when not initialized
+    end
 end
 
 -- Get whether to show zero values in state penalties sub items
 function FTE_ModOptions.shouldShowZeroPenalties()
-    return FTE_Config.showZeroPenalties and FTE_Config.showZeroPenalties:getValue() or false
+    if FTE_Config.showZeroPenalties then
+        return FTE_Config.showZeroPenalties:getValue()
+    else
+        return true  -- Default enabled when not initialized
+    end
 end
 
 -- Get whether to show min and max values in tooltip
 function FTE_ModOptions.shouldShowMinMaxValues()
-    return FTE_Config.showMinMaxValues and FTE_Config.showMinMaxValues:getValue() or false
+    if FTE_Config.showMinMaxValues then
+        return FTE_Config.showMinMaxValues:getValue()
+    else
+        return false  -- Default disabled when not initialized
+    end
 end
 
 -- Get whether to show formula in tooltip
 function FTE_ModOptions.shouldShowFormula()
-    return FTE_Config.showFormula and FTE_Config.showFormula:getValue() or false
+    if FTE_Config.showFormula then
+        return FTE_Config.showFormula:getValue()
+    else
+        return true  -- Default enabled when not initialized
+    end
 end
 
 -- Get whether to show vision bonus details even when modifier = 1
 function FTE_ModOptions.shouldShowVisionBonusDetails()
-    return FTE_Config.showVisionBonusDetails and FTE_Config.showVisionBonusDetails:getValue() or false
+    if FTE_Config.showVisionBonusDetails then
+        return FTE_Config.showVisionBonusDetails:getValue()
+    else
+        return false  -- Default disabled when not initialized
+    end
 end
 
 -- Get whether to show view distance in tooltip
 function FTE_ModOptions.shouldShowViewDistance()
-    return FTE_Config.showViewDistance and FTE_Config.showViewDistance:getValue() or false
+    if FTE_Config.showViewDistance then
+        return FTE_Config.showViewDistance:getValue()
+    else
+        return false  -- Default disabled when not initialized
+    end
 end
 
 -- Get whether to show zero value for food detection
 function FTE_ModOptions.shouldShowZeroFoodDetection()
-    return FTE_Config.showZeroFoodDetection and FTE_Config.showZeroFoodDetection:getValue() or false
+    if FTE_Config.showZeroFoodDetection then
+        return FTE_Config.showZeroFoodDetection:getValue()
+    else
+        return false  -- Default disabled when not initialized
+    end
 end
 
 -- Get the raw config object (for advanced usage)
@@ -126,5 +157,22 @@ function FTE_ModOptions.getOption(optionName)
     return nil
 end
 
--- Export the utility functions
+-- ===================================================================================================== --
+-- MOD OPTIONS INITIALIZATION
+-- ===================================================================================================== --
+
+---Initialize mod options when UI is ready
+function FTE_ModOptions.initialize()
+    if not PZAPI or not PZAPI.ModOptions then
+        FTE_Utils.logWarning("ModOptions API not available, using default values")
+        return
+    end
+    
+    FTE_Utils.logInfo("Initializing mod options...")
+    
+    FTE_ModOptionsConfig()
+    
+    FTE_Utils.logInfo("Mod options initialized successfully")
+end
+
 return FTE_ModOptions
