@@ -50,7 +50,7 @@ ForagingTooltipExtended/        # Root folder
 ├── README.md                  # This file
 ├── CHANGELOG.md               # Version history
 ├── LICENSE                    # License file
-├── workshop_description.txt   # Workshop description text
+├── workshop_description.bbcode   # Workshop description text
 ├── workshop_assets/           # Development assets
 └── instructions/              # Development documentation
 ```
