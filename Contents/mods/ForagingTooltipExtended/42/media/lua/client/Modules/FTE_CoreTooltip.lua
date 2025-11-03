@@ -186,12 +186,13 @@ local function buildVisionBonusDetailsText(_visionBonus, _modifiers)
 end
 
 -- ===================================================================================================== --
--- MAIN TOOLTIP GENERATION FUNCTION
+-- ISZONDISPLAY OVERRIDE FUNCTION
 -- ===================================================================================================== --
 
+---Override ISZoneDisplay:getVisionTooltipText to provide enhanced tooltip with detailed modifier breakdown
 ---@param zoneDisplay ISZoneDisplay
 ---@return string
-local function getVisionTooltipTextB429Extended(zoneDisplay)
+local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
     -- Use table-based concatenation for better performance
     local parts = {}
 
@@ -331,27 +332,8 @@ end
 ---Setup the core tooltip module
 function FTE_CoreTooltip:setupModule()
     FTE_Utils.logInfo("FTE_CoreTooltip: Setting up core tooltip enhancement module")
-    
-    -- Store original function reference
-    local originalGetVisionTooltipText = ISZoneDisplay.getVisionTooltipText
-    
-    -- Create wrapper function for ISZoneDisplay:getVisionTooltipText
-    local function wrappedGetVisionTooltipText(zoneDisplay)
-        -- Try extended tooltip
-        local success, result = pcall(function()
-            return getVisionTooltipTextB429Extended(zoneDisplay)
-        end)
-        
-        if success and result and result ~= "" then
-            return result
-        else
-            FTE_Utils.logError("FTE_CoreTooltip: Extended tooltip failed, falling back to vanilla: " .. tostring(result))
-            return originalGetVisionTooltipText(zoneDisplay)
-        end
-    end
-    
-    -- Override ISZoneDisplay:getVisionTooltipText using module's overrideFunction
-    self:overrideFunction(ISZoneDisplay, "getVisionTooltipText", wrappedGetVisionTooltipText)
+
+    self:overrideFunction(ISZoneDisplay, "getVisionTooltipText", ISZoneDisplay_getVisionTooltipText)
     
     FTE_Utils.logInfo("FTE_CoreTooltip: Core tooltip enhancement module setup complete")
 end
