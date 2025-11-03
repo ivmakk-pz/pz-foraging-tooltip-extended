@@ -1,6 +1,9 @@
 ﻿# Changelog
 
 ## [Unreleased]
+### Changed
+- Refactored codebase to modular architecture with fault-isolated feature modules
+
 ### Fixed
 - Food Detection section now properly hides when bonus is zero and option is disabled
 
