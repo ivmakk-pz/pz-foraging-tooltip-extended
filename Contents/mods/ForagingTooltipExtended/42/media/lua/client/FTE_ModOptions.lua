@@ -11,6 +11,7 @@ local FTE_Config = {
     showVisionBonusDetails = nil,
     showViewDistance = nil,
     showZeroFoodDetection = nil,
+    showPersistentRadius = nil,
 }
 
 -- Configuration function to set up mod options
@@ -72,6 +73,14 @@ local function FTE_ModOptionsConfig()
         getText("UI_options_FTE_showZeroTraitBonuses"), 
         false, 
         getText("UI_options_FTE_showZeroTraitBonuses_tooltip")
+    )
+    
+    -- Add checkbox option to show persistent radius display
+    FTE_Config.showPersistentRadius = options:addTickBox(
+        "showPersistentRadius", 
+        getText("UI_options_FTE_showPersistentRadius"), 
+        true, 
+        getText("UI_options_FTE_showPersistentRadius_tooltip")
     )
 end
 
@@ -144,6 +153,15 @@ function FTE_ModOptions.shouldShowZeroFoodDetection()
     end
 end
 
+-- Get whether to show persistent radius display
+function FTE_ModOptions.shouldShowPersistentRadius()
+    if FTE_Config.showPersistentRadius then
+        return FTE_Config.showPersistentRadius:getValue()
+    else
+        return true  -- Default enabled when not initialized
+    end
+end
+
 -- Get the raw config object (for advanced usage)
 function FTE_ModOptions.getConfig()
     return FTE_Config
@@ -152,6 +170,7 @@ end
 -- Get a specific option by its field name
 function FTE_ModOptions.getOption(optionName)
     if FTE_Config[optionName] then
+        ---@diagnostic disable-next-line: undefined-field
         return FTE_Config[optionName]:getValue()
     end
     return nil

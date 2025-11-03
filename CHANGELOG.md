@@ -1,6 +1,9 @@
 ﻿# Changelog
 
 ## [Unreleased]
+### Added
+- Optional search radius display before the eye icon (enabled by default, visible during search mode)
+ 
 ### Changed
 - Refactored codebase to modular architecture with fault-isolated feature modules
 

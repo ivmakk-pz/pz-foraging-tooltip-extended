@@ -14,4 +14,6 @@ UI_FTE_EN = {
     UI_options_FTE_showViewDistance_tooltip = "When enabled, displays the estimated detection range for individual forageable items. This shows how close you need to be to actually spot specific items within your search radius",
     UI_options_FTE_showZeroFoodDetection = "Show Zero Food Detection Bonus",
     UI_options_FTE_showZeroFoodDetection_tooltip = "When enabled, displays the food detection bonus even when hunger bonus is 0 % (no bonus)",
+    UI_options_FTE_showPersistentRadius = "Show Radius before Eye Icon",
+    UI_options_FTE_showPersistentRadius_tooltip = "Shows current search radius next to the eye icon (always visible, no hover required)",
 }
