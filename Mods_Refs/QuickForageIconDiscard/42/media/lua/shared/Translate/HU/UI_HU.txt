@@ -1,0 +1,16 @@
+UI_QFID_HU = {
+    -- Option Labels
+    UI_options_QFID_discardButton = "Elvetés gomb",
+    UI_options_QFID_contextMenuButton = "Helyi menü gomb",
+    UI_options_QFID_showTooltip = "Tárgy eszköztipp megjelenítése",
+    UI_options_QFID_discardEnduranceModifier = "Elvetési állóképesség büntetés",
+    
+    -- Option Tooltips
+    UI_options_QFID_discardEnduranceModifier_tooltip = "Állóképesség költség tárgyak elvetésekor. 0% = nincs költség, 50% = alapértelmezett, 100% = alapjáték.",
+    
+    -- Button Names
+    UI_options_QFID_button_RMB = "Jobb egérgomb",
+    UI_options_QFID_button_RMB_default = "Jobb egérgomb",
+    UI_options_QFID_button_MMB = "Középső egérgomb",
+    UI_options_QFID_button_MB_template = "Egérgomb %1",
+}
