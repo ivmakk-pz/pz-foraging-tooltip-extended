@@ -165,11 +165,6 @@ end
 ---@param _shouldShowZeroPenalties boolean
 ---@return string
 local function buildPenaltiesText(_modifiers, _otherPenalties, _shouldShowZeroPenalties)
-	local parts = {
-		" ", Colors.white, "E. ", getText("IGUI_FTE_SearchMode_Vision_Effect_State_Penalties"), 
-		": <SPACE> ", FTE_Utils.getRGBForValue(_otherPenalties), FTE_Utils.formatNumber(_otherPenalties), " <LINE> "
-	}
-	
 	local penaltyItems = {
 		{modifier = _modifiers.clothingPenalty, textKey = "IGUI_SearchMode_Vision_Effect_Clothing"},
 		{modifier = _modifiers.exhaustionPenalty, textKey = "IGUI_FTE_SearchMode_Vision_Effect_Exhaustion"},
@@ -178,11 +173,28 @@ local function buildPenaltiesText(_modifiers, _otherPenalties, _shouldShowZeroPe
 		{modifier = _modifiers.movementPenalty, textKey = "IGUI_SearchMode_Vision_Effect_Movement"}
 	}
 	
+	-- Collect sub-items that should be displayed
+	local subItems = {}
 	for i = 1, #penaltyItems do
 		local item = penaltyItems[i];
 		if _shouldShowZeroPenalties or math.abs(item.modifier - 1) >= 0.01 then
-			table.insert(parts, FTE_Utils.getToolTipTextSubValue(getText(item.textKey), item.modifier, "", "- "));
+			table.insert(subItems, FTE_Utils.getToolTipTextSubValue(getText(item.textKey), item.modifier, "", "- "));
 		end
+	end
+	
+	-- Only build section if there are sub-items to display
+	if #subItems == 0 then
+		return ""
+	end
+	
+	-- Build header + sub-items
+	local parts = {
+		" ", Colors.white, "E. ", getText("IGUI_FTE_SearchMode_Vision_Effect_State_Penalties"), 
+		": <SPACE> ", FTE_Utils.getRGBForValue(_otherPenalties), FTE_Utils.formatNumber(_otherPenalties), " <LINE> "
+	}
+	
+	for i = 1, #subItems do
+		table.insert(parts, subItems[i])
 	end
 	
 	return table.concat(parts);
@@ -201,8 +213,8 @@ end
 local function addFoodDetectionSection(character)
 	local hungerBonus = getHungerBonus(character)
 	
-	-- Check if we should show this section when bonus is 0
-	if hungerBonus <= 1 and not FTE_ModOptions.shouldShowZeroFoodDetection() then
+	-- Hide section if no bonus and option disabled
+	if hungerBonus <= 1.01 and not FTE_ModOptions.shouldShowZeroFoodDetection() then
 		return ""
 	end
     
@@ -330,8 +342,11 @@ local function getVisionTooltipTextB429Extended(zoneDisplay)
 
     -- E. State Penalties detailed breakdown
 	if FTE_ModOptions.shouldShowZeroPenalties() or math.abs(otherPenalties - 1) >= 0.01 then
-        table.insert(parts, buildPenaltiesText(modifiers, otherPenalties, FTE_ModOptions.shouldShowZeroPenalties()));
-        table.insert(parts, " <LINE> ");
+        local penaltiesSection = buildPenaltiesText(modifiers, otherPenalties, FTE_ModOptions.shouldShowZeroPenalties());
+        if penaltiesSection and penaltiesSection ~= "" then
+            table.insert(parts, penaltiesSection);
+            table.insert(parts, " <LINE> ");
+        end
 	end
 
 	-- Add view distance section if enabled

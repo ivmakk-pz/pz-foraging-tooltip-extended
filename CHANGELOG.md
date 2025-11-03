@@ -1,6 +1,8 @@
 ﻿# Changelog
 
 ## [Unreleased]
+### Fixed
+- Food Detection section now properly hides when bonus is zero and option is disabled
 
 ## [1.1.2] - 2025-06-28
 ### Changed
