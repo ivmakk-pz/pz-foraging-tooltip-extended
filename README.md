@@ -73,6 +73,7 @@ Contents/mods/ForagingTooltipExtended/42/media/lua/client/
 └── Modules/
     ├── FTE_CoreTooltip.lua           # Core tooltip enhancements
     ├── FTE_ViewDistance.lua          # View distance calculations (optional)
+    ├── FTE_SearchRadiusDisplay.lua   # Persistent radius display next to eye icon
     ├── FTE_SearchRadiusVisual.lua    # Visual radius display (future)
     └── FTE_EquipmentImpact.lua       # Equipment analysis (future)
 ```
@@ -90,6 +91,7 @@ Contents/mods/ForagingTooltipExtended/42/media/lua/client/
 - **Core/FTE_ModuleBase.lua**: Base class providing lifecycle hooks and error handling for all modules
 - **Modules/FTE_CoreTooltip.lua**: Main tooltip enhancement logic (hooks into vanilla foraging system)
 - **Modules/FTE_ViewDistance.lua**: Optional view distance calculation system
+- **Modules/FTE_SearchRadiusDisplay.lua**: Displays current search radius before the eye icon in ISZoneDisplay panel
 - **Translate files**: Localization strings for UI elements
 
 ### Key Functions & Patterns
@@ -148,6 +150,8 @@ Options are stored in mod data and accessed via `FTE_ModOptions` module:
 - `shouldShowVisionBonusDetails()`: Toggle vision bonus breakdown
 - `shouldShowZeroPenalties()`: Toggle zero-value penalty display
 - `shouldShowZeroTraitBonuses()`: Toggle zero-value trait bonus display
+- `shouldShowViewDistance()`: Toggle view distance estimates for items
+- `shouldShowPersistentRadius()`: Toggle persistent radius display before eye icon
 
 ## Known Issues & Limitations
 

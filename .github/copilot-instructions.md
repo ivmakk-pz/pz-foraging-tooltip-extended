@@ -80,6 +80,7 @@ Java: UIElement → ObjectTooltip (native item tooltips)
 
 **Tooltip Extension patches:**
 1. `ISZoneDisplay:getVisionTooltipText()` - Extends vision tooltip with detailed modifiers, formula breakdown, view distances, and food detection bonus
+2. `ISZoneDisplay:render()` - Adds persistent search radius display before the eye icon (FTE_SearchRadiusDisplay module)
 
 ### Other Directories
 - **`.github/instructions/`** - Development guidelines and modding instructions
@@ -134,14 +135,22 @@ When developing features, always work in the `Contents/mods/ForagingTooltipExten
 
 ```
 Contents/mods/ForagingTooltipExtended/42/media/lua/client/
-├── FTE_Client.lua       # Main tooltip generation and ISZoneDisplay override
-├── FTE_ModOptions.lua   # PZAPI mod options configuration
-└── FTE_Utils.lua        # Shared utilities (colors, formatting, helpers)
+├── FTE_Client.lua                    # Main entry point (orchestrator)
+├── FTE_ModOptions.lua                # Mod options configuration
+├── FTE_Utils.lua                     # Shared utilities (colors, formatting, helpers)
+│
+├── Core/
+│   └── FTE_ModuleBase.lua            # Base class for all feature modules
+│
+└── Modules/
+    ├── FTE_CoreTooltip.lua           # Core tooltip enhancements (mandatory)
+    ├── FTE_ViewDistance.lua          # View distance calculations (optional)
+    └── FTE_SearchRadiusDisplay.lua   # Persistent radius display (optional)
 
 Contents/mods/ForagingTooltipExtended/42/media/lua/shared/Translate/
 └── EN/
-    ├── IGUI_FTE_EN.txt  # In-game UI translations
-    └── UI_FTE_EN.txt    # Mod options translations
+    ├── IG_UI_EN.txt  # In-game UI translations
+    └── UI_EN.txt     # Mod options translations
 ```
 
 ## Testing Guidelines
@@ -213,9 +222,11 @@ When implementing a feature (only when explicitly requested), focus solely on:
 - **Formula Display**: Optional formula view (A * B * C * D * E) with color-coded values
 - **Min/Max Indicators**: Highlights when radius reaches minimum or maximum caps
 - **View Distance Estimates**: Shows detection ranges for small/medium/large items
+- **Persistent Radius Display**: Shows current search radius before the eye icon (always visible during search mode)
 - **Food Detection Bonus**: Displays hunger-based food detection multiplier
 - **Vision Bonus Details**: Breaks down aiming and crouching bonuses
 - **State Penalties**: Details clothing, exhaustion, panic, body damage, movement penalties
 - **Trait/Profession Bonuses**: Shows all category-specific bonuses with sorting (non-zero first)
-- **Customizable Display**: 7 mod options to toggle sections and zero-value visibility
+- **Customizable Display**: Multiple mod options to toggle sections and zero-value visibility
 - **Error Resilience**: Production mode with fallback to vanilla tooltip on failure
+- **Modular Architecture**: Fault-isolated feature modules for stability and maintainability
