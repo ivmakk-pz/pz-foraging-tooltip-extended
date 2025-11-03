@@ -146,10 +146,8 @@ Each feature module:
 Options are stored in mod data and accessed via `FTE_ModOptions` module:
 
 - `shouldShowFormula()`: Toggle formula display
-- `shouldShowMinMaxValues()`: Toggle min/max radius values
 - `shouldShowVisionBonusDetails()`: Toggle vision bonus breakdown
 - `shouldShowZeroPenalties()`: Toggle zero-value penalty display
-- `shouldShowZeroTraitBonuses()`: Toggle zero-value trait bonus display
 - `shouldShowViewDistance()`: Toggle view distance estimates for items
 - `shouldShowPersistentRadius()`: Toggle persistent radius display before eye icon
 

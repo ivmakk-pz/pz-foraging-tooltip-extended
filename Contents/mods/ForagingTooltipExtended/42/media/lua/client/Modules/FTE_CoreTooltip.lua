@@ -44,31 +44,6 @@ local function buildFormulaString(_formulaData, _isAtMinRadius, _isAtMaxRadius)
 	return " " .. Colors.white .. "- Formula: <SPACE>" .. table.concat(parts) .. " <LINE> ";
 end
 
----Builds the min/max radius section for the tooltip
----@param _visionRadius number
----@param _searchManager table
----@return string
-local function buildMinMaxText(_visionRadius, _searchManager)
-	local minRadius = _searchManager.minRadius;
-	local maxRadius = _searchManager.maxRadiusCap
-	local minColor = Colors.grey;
-	local maxColor = Colors.grey;
-
-	if math.abs(_visionRadius - minRadius) < 0.01 then
-		minColor = Colors.bad;
-	end
-	if math.abs(_visionRadius - maxRadius) < 0.01 then
-		maxColor = Colors.good;
-	end
-
-	local parts = {
-		" ", Colors.white, "- Min: <SPACE> ", minColor, FTE_Utils.formatNumber(minRadius), " <LINE> ",
-		" ", Colors.white, "- Max: <SPACE> ", maxColor, FTE_Utils.formatNumber(maxRadius), " <LINE> "
-	}
-	
-	return table.concat(parts);
-end
-
 ---Builds the penalties section for the tooltip
 ---@param _modifiers table
 ---@param _otherPenalties number
@@ -123,8 +98,8 @@ end
 local function addFoodDetectionSection(character)
 	local hungerBonus = getHungerBonus(character)
 	
-	-- Hide section if no bonus and option disabled
-	if hungerBonus <= 1.01 and not FTE_ModOptions.shouldShowZeroFoodDetection() then
+	-- Hide section if no bonus
+	if hungerBonus <= 1.01 then
 		return ""
 	end
     
@@ -206,11 +181,6 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
 
 		table.insert(parts, buildFormulaString(formulaData, isAtMinRadius, isAtMaxRadius));
 	end
-	
-	-- Min/Max
-	if FTE_ModOptions.shouldShowMinMaxValues() then
-		table.insert(parts, buildMinMaxText(visionRadius, searchManager));
-	end
 
     -- Add modifiers section
 	table.insert(parts, " <LINE> ");
@@ -281,10 +251,9 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
 	FTE_Utils.sortTooltipItems(characterItems)
 
     -- Add sorted character items to text
-	local shouldShowZeroTraitBonuses = FTE_ModOptions.shouldShowZeroTraitBonuses()
 	for i = 1, #characterItems do
 		local item = characterItems[i];
-		if shouldShowZeroTraitBonuses or not item.isBonus or item.value ~= 0 then
+		if not item.isBonus or item.value ~= 0 then
 			table.insert(parts, FTE_Utils.getToolTipText(item.text, item.value, item.isBonus));
 		end
 	end

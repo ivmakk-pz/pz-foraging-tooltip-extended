@@ -7,6 +7,12 @@
 ### Changed
 - Refactored codebase to modular architecture with fault-isolated feature modules
 
+### Removed
+- "Show Min/Max Values" mod option (min/max indicators already shown via color-highlighting in radius display)
+- "Show Items View Distance" mod option and feature (view distance estimates for small/medium/large items)
+- "Show Zero Trait Bonuses" mod option (zero-value trait/profession bonuses now always hidden for cleaner display)
+- "Show Zero Food Detection Bonus" mod option (food detection section now always hidden when hunger bonus is zero)
+
 ### Fixed
 - Food Detection section now properly hides when bonus is zero and option is disabled
 

@@ -5,11 +5,8 @@ local FTE_Utils = require("FTE_Utils")
 -- Storage array for all of our options
 local FTE_Config = {
     showZeroPenalties = nil,
-    showZeroTraitBonuses = nil,
-    showMinMaxValues = nil,
     showFormula = nil,
     showVisionBonusDetails = nil,
-    showZeroFoodDetection = nil,
     showPersistentRadius = nil,
 }
 
@@ -24,14 +21,6 @@ local function FTE_ModOptionsConfig()
         getText("UI_options_FTE_showFormula"), 
         true, 
         getText("UI_options_FTE_showFormula_tooltip")
-    )
-    
-    -- Add checkbox option to show min and max values in tooltip
-    FTE_Config.showMinMaxValues = options:addTickBox(
-        "showMinMaxValues", 
-        getText("UI_options_FTE_showMinMaxValues"), 
-        false, 
-        getText("UI_options_FTE_showMinMaxValues_tooltip")
     )
     
     -- Add checkbox option to show vision bonus details even when modifier = 1
@@ -49,23 +38,7 @@ local function FTE_ModOptionsConfig()
         true, 
         getText("UI_options_FTE_showZeroPenalties_tooltip")
     )
-    
-    -- Add checkbox option to show zero value for food detection
-    FTE_Config.showZeroFoodDetection = options:addTickBox(
-        "showZeroFoodDetection", 
-        getText("UI_options_FTE_showZeroFoodDetection"), 
-        false, 
-        getText("UI_options_FTE_showZeroFoodDetection_tooltip")
-    )
 
-    -- Add checkbox option to show 0 values in trait/profession bonuses
-    FTE_Config.showZeroTraitBonuses = options:addTickBox(
-        "showZeroTraitBonuses", 
-        getText("UI_options_FTE_showZeroTraitBonuses"), 
-        false, 
-        getText("UI_options_FTE_showZeroTraitBonuses_tooltip")
-    )
-    
     -- Add checkbox option to show persistent radius display
     FTE_Config.showPersistentRadius = options:addTickBox(
         "showPersistentRadius", 
@@ -81,30 +54,12 @@ end
 
 local FTE_ModOptions = {}
 
--- Get whether to show zero values in trait/profession bonuses
-function FTE_ModOptions.shouldShowZeroTraitBonuses()
-    if FTE_Config.showZeroTraitBonuses then
-        return FTE_Config.showZeroTraitBonuses:getValue()
-    else
-        return false  -- Default disabled when not initialized
-    end
-end
-
 -- Get whether to show zero values in state penalties sub items
 function FTE_ModOptions.shouldShowZeroPenalties()
     if FTE_Config.showZeroPenalties then
         return FTE_Config.showZeroPenalties:getValue()
     else
         return true  -- Default enabled when not initialized
-    end
-end
-
--- Get whether to show min and max values in tooltip
-function FTE_ModOptions.shouldShowMinMaxValues()
-    if FTE_Config.showMinMaxValues then
-        return FTE_Config.showMinMaxValues:getValue()
-    else
-        return false  -- Default disabled when not initialized
     end
 end
 
@@ -121,15 +76,6 @@ end
 function FTE_ModOptions.shouldShowVisionBonusDetails()
     if FTE_Config.showVisionBonusDetails then
         return FTE_Config.showVisionBonusDetails:getValue()
-    else
-        return false  -- Default disabled when not initialized
-    end
-end
-
--- Get whether to show zero value for food detection
-function FTE_ModOptions.shouldShowZeroFoodDetection()
-    if FTE_Config.showZeroFoodDetection then
-        return FTE_Config.showZeroFoodDetection:getValue()
     else
         return false  -- Default disabled when not initialized
     end
