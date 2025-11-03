@@ -1,0 +1,16 @@
+UI_QFID_JP = {
+    -- Option Labels
+    UI_options_QFID_discardButton = "廃棄ボタン",
+    UI_options_QFID_contextMenuButton = "コンテキストメニューボタン",
+    UI_options_QFID_showTooltip = "アイテムツールチップを表示",
+    UI_options_QFID_discardEnduranceModifier = "廃棄時の持久力ペナルティ",
+    
+    -- Option Tooltips
+    UI_options_QFID_discardEnduranceModifier_tooltip = "アイテム廃棄時の持久力コスト。0% = コストなし、50% = デフォルト、100% = 基本ゲーム。",
+    
+    -- Button Names
+    UI_options_QFID_button_RMB = "マウス右ボタン",
+    UI_options_QFID_button_RMB_default = "マウス右ボタン",
+    UI_options_QFID_button_MMB = "マウス中ボタン",
+    UI_options_QFID_button_MB_template = "マウスボタン %1",
+}

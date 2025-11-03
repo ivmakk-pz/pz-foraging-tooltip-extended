@@ -1,0 +1,16 @@
+UI_QFID_TR = {
+    -- Option Labels
+    UI_options_QFID_discardButton = "Atma Düğmesi",
+    UI_options_QFID_contextMenuButton = "Bağlam Menüsü Düğmesi",
+    UI_options_QFID_showTooltip = "Öğe İpucunu Göster",
+    UI_options_QFID_discardEnduranceModifier = "Atma Dayanıklılık Cezası",
+    
+    -- Option Tooltips
+    UI_options_QFID_discardEnduranceModifier_tooltip = "Öğeleri atarken dayanıklılık maliyeti. 0% = maliyet yok, 50% = varsayılan, 100% = temel oyun.",
+    
+    -- Button Names
+    UI_options_QFID_button_RMB = "Sağ Fare Düğmesi",
+    UI_options_QFID_button_RMB_default = "Sağ Fare Düğmesi",
+    UI_options_QFID_button_MMB = "Orta Fare Düğmesi",
+    UI_options_QFID_button_MB_template = "Fare Düğmesi %1",
+}

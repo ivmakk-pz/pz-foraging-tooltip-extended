@@ -1,0 +1,16 @@
+UI_QFID_DA = {
+    -- Option Labels
+    UI_options_QFID_discardButton = "Kassér knap",
+    UI_options_QFID_contextMenuButton = "Kontekstmenu knap",
+    UI_options_QFID_showTooltip = "Vis genstandsværktøjstip",
+    UI_options_QFID_discardEnduranceModifier = "Kassér udholdenhedsstraf",
+    
+    -- Option Tooltips
+    UI_options_QFID_discardEnduranceModifier_tooltip = "Udholdenhedsomkostning ved kassering af genstande. 0% = ingen omkostning, 50% = standard, 100% = basis spil.",
+    
+    -- Button Names
+    UI_options_QFID_button_RMB = "Højre museknap",
+    UI_options_QFID_button_RMB_default = "Højre museknap",
+    UI_options_QFID_button_MMB = "Midterste museknap",
+    UI_options_QFID_button_MB_template = "Museknap %1",
+}

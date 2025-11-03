@@ -1,0 +1,16 @@
+UI_QFID_PL = {
+    -- Option Labels
+    UI_options_QFID_discardButton = "Przycisk odrzucenia",
+    UI_options_QFID_contextMenuButton = "Przycisk menu kontekstowego",
+    UI_options_QFID_showTooltip = "Pokaż podpowiedź przedmiotu",
+    UI_options_QFID_discardEnduranceModifier = "Kara zmęczenia za odrzucenie",
+    
+    -- Option Tooltips
+    UI_options_QFID_discardEnduranceModifier_tooltip = "Koszt zmęczenia przy odrzuceniu przedmiotów. 0% = brak kosztu, 50% = domyślnie, 100% = podstawowa gra.",
+    
+    -- Button Names
+    UI_options_QFID_button_RMB = "Prawy przycisk myszy",
+    UI_options_QFID_button_RMB_default = "Prawy przycisk myszy",
+    UI_options_QFID_button_MMB = "Środkowy przycisk myszy",
+    UI_options_QFID_button_MB_template = "Przycisk myszy %1",
+}

@@ -16,6 +16,13 @@ This workspace follows the standard Project Zomboid mod structure:
 ### Vanilla Game Reference Directory
 - **`PZ_files/`** - Original Project Zomboid files from Build 42.12.3 (**READ-ONLY**)
   - **DO NOT MODIFY** - Reference only for understanding vanilla implementations
+
+### Preferred Modular Structure Reference
+- **`Mods_Refs/QuickForageIconDiscard/`** - Reference mod showcasing preferred modular structure and project hierarchy (**READ-ONLY**)
+  - **DO NOT MODIFY** - This is the developer's latest mod demonstrating the preferred modular architecture
+  - Use this as the primary reference for project structure, code organization, and architectural patterns
+  - Follow the modular design patterns, file organization, and naming conventions used in this mod
+  - This represents the current best practices and preferred development approach
   
 #### Class Hierarchy
 ```

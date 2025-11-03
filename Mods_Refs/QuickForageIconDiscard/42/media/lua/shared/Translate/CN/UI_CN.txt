@@ -1,0 +1,16 @@
+UI_QFID_CN = {
+    -- Option Labels
+    UI_options_QFID_discardButton = "丢弃按钮",
+    UI_options_QFID_contextMenuButton = "上下文菜单按钮",
+    UI_options_QFID_showTooltip = "显示物品提示",
+    UI_options_QFID_discardEnduranceModifier = "丢弃耐力惩罚",
+    
+    -- Option Tooltips
+    UI_options_QFID_discardEnduranceModifier_tooltip = "丢弃物品时的耐力消耗。0% = 无消耗，50% = 默认值，100% = 原版游戏。",
+    
+    -- Button Names
+    UI_options_QFID_button_RMB = "鼠标右键",
+    UI_options_QFID_button_RMB_default = "鼠标右键",
+    UI_options_QFID_button_MMB = "鼠标中键",
+    UI_options_QFID_button_MB_template = "鼠标按钮 %1",
+}
