@@ -4,6 +4,7 @@
 local FTE_ModuleBase = require("Core/FTE_ModuleBase")
 local FTE_Utils = require("FTE_Utils")
 local FTE_ModOptions = require("FTE_ModOptions")
+local FTE_ViewDistance = require("Modules/FTE_ViewDistance")
 
 -- ===================================================================================================== --
 -- MODULE CLASS DEFINITION
@@ -16,97 +17,7 @@ local FTE_CoreTooltip = FTE_ModuleBase:derive("FTE_CoreTooltip")
 local instance = FTE_CoreTooltip:new()
 ---@cast instance FTE_CoreTooltip
 
--- ===================================================================================================== --
--- VISION CALCULATION CONSTANTS AND CACHE
--- ===================================================================================================== --
 
-local VIEW_DISTANCE_REFERENCE_SIZES = {
-    small = 0.1,
-    medium = 1.0,
-    large = 10.0
-}
-
-local iconCache = {}
-
--- ===================================================================================================== --
--- VISION DISTANCE CALCULATION FUNCTIONS
--- ===================================================================================================== --
-
----Create or retrieve cached ISBaseIcon instance for vision calculation
----@param character IsoGameCharacter The player character
----@param itemSize number The synthetic item size (e.g., 0.1, 1.0, 10.0)
----@param square IsoGridSquare|nil The square to use for calculation (defaults to character's current square)
----@param searchManager ISSearchManager The search manager to use (required for real calculation)
----@return ISBaseIcon realIcon The cached or newly created icon instance
-local function createRealIconForVisionCalculation(character, itemSize, square, searchManager)
-    local cacheKey = "size_" .. tostring(itemSize);
-    
-    if iconCache[cacheKey] then
-        return iconCache[cacheKey];
-    end
-    
-    local targetSquare = square or character:getCurrentSquare();
-    local itemType = "Base.Stone2";
-    
-    local iconData = {
-        id = itemType .. "_vision_calc_" .. tostring(itemSize),
-        x = 0,
-        y = 0,
-        z = 0,
-		itemType = itemType,
-        itemSize = itemSize,
-    };
-    
-    local icon = ISBaseIcon:new(searchManager, iconData);
-    
-    icon.itemDef = {
-        type = itemType,
-        minCount = 1,
-        maxCount = 1,
-        spawnFuncs = nil
-    };
-    
-    icon.itemObj = instanceItem("Base.Stone2");
-    icon.square = targetSquare;
-    
-    icon:setIsSeen(false);
-    icon:setIsNoticed(false);
-    icon:setAlpha(1.0);
-    
-    icon:initGridSquare();
-    icon:initItem();
-    
-    iconCache[cacheKey] = icon;
-    
-    return icon;
-end
-
----Get view distance for a specific item size using cached icons and vanilla calculation
----@param character IsoGameCharacter The player character
----@param itemSize number The item size to calculate view distance for
----@param searchManager ISSearchManager The search manager to use for vision calculation
----@return number viewDistance The calculated view distance in tiles
-local function getItemViewDistance(character, itemSize, searchManager)
-    local currentSquare = character:getCurrentSquare();
-    local itemIcon = createRealIconForVisionCalculation(character, itemSize, currentSquare, searchManager);
-    
-    itemIcon:updateModifiers();
-    local viewDistance = itemIcon:doVisionCheck();
-
-    return viewDistance;
-end
-
----Get view distances for all reference item sizes (small, medium, large)
----@param character IsoGameCharacter The player character
----@param searchManager ISSearchManager The search manager to use for vision calculation
----@return table viewDistances
-local function getAllViewDistances(character, searchManager)
-    return {
-        small = getItemViewDistance(character, VIEW_DISTANCE_REFERENCE_SIZES.small, searchManager),
-        medium = getItemViewDistance(character, VIEW_DISTANCE_REFERENCE_SIZES.medium, searchManager),
-        large = getItemViewDistance(character, VIEW_DISTANCE_REFERENCE_SIZES.large, searchManager)
-    };
-end
 
 -- ===================================================================================================== --
 -- TOOLTIP BUILDING HELPER FUNCTIONS
@@ -233,11 +144,17 @@ local function addFoodDetectionSection(character)
 end
 
 ---Generate view distance section showing how far the character can see different item sizes
+---Uses the FTE_ViewDistance module if available and active
 ---@param character IsoGameCharacter
 ---@param searchManager ISSearchManager
 ---@return string
 local function addViewDistanceSection(character, searchManager)
-    local viewDistances = getAllViewDistances(character, searchManager)
+    -- Check if ViewDistance module is active
+    if not FTE_ViewDistance.isActive() then
+        return ""
+    end
+    
+    local viewDistances = FTE_ViewDistance.getAllViewDistances(character, searchManager)
     
     local parts = {
         " ", Colors.white, getText("IGUI_FTE_View_Distance_Header"), " <LINE> ",

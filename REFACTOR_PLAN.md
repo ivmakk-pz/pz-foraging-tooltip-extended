@@ -43,16 +43,16 @@ Contents/mods/ForagingTooltipExtended/42/media/lua/client/
   - [x] Export module interface (initialise, destroy, isActive, getInstance)
 
 ### Phase 3: Extract View Distance
-- [ ] Create `Modules/FTE_ViewDistance.lua`
-  - [ ] Move view distance calculation code
-  - [ ] Move `createRealIconForVisionCalculation()`
-  - [ ] Move `getItemViewDistance()`
-  - [ ] Move `getAllViewDistances()`
-  - [ ] Move `VIEW_DISTANCE_REFERENCE_SIZES`
-  - [ ] Move `iconCache`
-  - [ ] Wrap in module pattern
-  - [ ] Export API for core tooltip to use
-  - [ ] Mark as optional/experimental
+- [x] Create `Modules/FTE_ViewDistance.lua`
+  - [x] Move view distance calculation code
+  - [x] Move `createRealIconForVisionCalculation()`
+  - [x] Move `getItemViewDistance()`
+  - [x] Move `getAllViewDistances()`
+  - [x] Move `VIEW_DISTANCE_REFERENCE_SIZES`
+  - [x] Move `iconCache`
+  - [x] Wrap in module pattern
+  - [x] Export API for core tooltip to use
+  - [x] Mark as optional/experimental
 
 ### Phase 4: Create New Feature Stubs
 - [ ] Create `Modules/FTE_SearchRadiusVisual.lua` (empty skeleton)

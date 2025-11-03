@@ -3,6 +3,7 @@
 
 local FTE_Utils = require "FTE_Utils"
 local FTE_ModOptions = require "FTE_ModOptions"
+local FTE_ViewDistance = require "Modules/FTE_ViewDistance"
 local FTE_CoreTooltip = require "Modules/FTE_CoreTooltip"
 
 -- ===================================================================================================== --
@@ -14,6 +15,10 @@ local ForagingTooltipExtended = {}
 function ForagingTooltipExtended.init()
     FTE_Utils.logInfo("Foraging Tooltip Extended v" .. FTE_Utils.MOD_VERSION .. " - Initializing...")
     
+    -- Initialize ViewDistance module first (it's used by CoreTooltip)
+    FTE_ViewDistance.initialise()
+    
+    -- Initialize CoreTooltip module
     FTE_CoreTooltip.initialise()
     
     FTE_Utils.logInfo("Client initialization complete")
