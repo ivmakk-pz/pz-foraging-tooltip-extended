@@ -134,24 +134,34 @@ When developing features, always work in the `Contents/mods/ForagingTooltipExten
 ## Current Implementation Structure
 
 ```
-Contents/mods/ForagingTooltipExtended/42/media/lua/client/
-├── FTE_Client.lua                    # Main entry point (orchestrator)
-├── FTE_ModOptions.lua                # Mod options configuration
-├── FTE_Utils.lua                     # Shared utilities (colors, formatting, helpers)
-│
-├── Core/
-│   └── FTE_ModuleBase.lua            # Base class for all feature modules
-│
-└── Modules/
-    ├── FTE_CoreTooltip.lua           # Core tooltip enhancements (mandatory)
-    ├── FTE_ViewDistance.lua          # View distance calculations (optional)
-    └── FTE_SearchRadiusDisplay.lua   # Persistent radius display (optional)
-
-Contents/mods/ForagingTooltipExtended/42/media/lua/shared/Translate/
-└── EN/
-    ├── IG_UI_EN.txt  # In-game UI translations
-    └── UI_EN.txt     # Mod options translations
+Contents/mods/ForagingTooltipExtended/42/media/
+├── lua/
+│   ├── client/
+│   │   ├── FTE_Client.lua                    # Main entry point (orchestrator)
+│   │   ├── FTE_ModOptions.lua                # Mod options configuration
+│   │   ├── FTE_Utils.lua                     # Shared utilities (colors, formatting, helpers)
+│   │   ├── Core/
+│   │   │   └── FTE_ModuleBase.lua            # Base class for all feature modules
+│   │   └── Modules/
+│   │       ├── FTE_CoreTooltip.lua           # Core tooltip enhancements (mandatory)
+│   │       ├── FTE_ViewDistance.lua          # View distance calculations (optional)
+│   │       └── FTE_SearchRadiusDisplay.lua   # Persistent radius display (optional)
+│   └── shared/Translate/
+│       └── EN/
+│           ├── IG_UI_EN.txt                  # In-game UI translations
+│           └── UI_EN.txt                     # Mod options translations
+└── ui/
+    └── TooltipStructureItems/
+        ├── middle_connector.png              # Tree connector for list items (16x16px)
+        └── last_connector.png                # Tree connector for last item (16x16px)
 ```
+
+### UI Assets
+
+- **Tree Connector Images**: Custom images for tooltip list structure visualization
+  - Size: 16x16 pixels (optimized for clean display)
+  - Auto-scales based on font size selected in game options (calculated from UIFont.NewSmall line height)
+  - Used in A-F modifier section to create visual hierarchy
 
 ## Testing Guidelines
 

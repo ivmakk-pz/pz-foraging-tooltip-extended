@@ -25,6 +25,9 @@ local instance = FTE_VisionAffectingItems:new()
 -- Items must have a penalty to be shown (no zero-effect items by default)
 local MIN_PENALTY_THRESHOLD = 0.01  -- 0.01% minimum penalty to display
 
+-- Maximum width for item names in pixels (prevents long names from breaking layout)
+local MAX_ITEM_NAME_WIDTH = 120
+
 -- ===================================================================================================== --
 -- DATA COLLECTION FUNCTIONS
 -- ===================================================================================================== --
@@ -159,43 +162,69 @@ end
 
 ---Format a single item entry for tooltip display
 ---@param itemData table Item penalty data (from calculateItemPenalty)
+---@param isLast boolean|nil Whether this is the last item in the list (for tree connector)
+---@param setXPosition number|nil X position for value alignment (uses tree connector if provided)
 ---@return string richTextLine Formatted rich text line for this item
-local function formatItemEntry(itemData)
+local function formatItemEntry(itemData, isLast, setXPosition)
     local parts = {}
     
-    -- Level 1 indentation with white color (single dash for top-level items under F section)
-    table.insert(parts, FTE_Utils.Colors.white)
-    table.insert(parts, "-")
-    
-    -- Add item icon if available with fixed square size
-    if itemData.iconName and itemData.iconTexture then
-        -- Use fixed square size matching line height
-        local iconSize = 16
+    -- Use tree connectors if alignment position is provided, otherwise use simple dash
+    if setXPosition then
+        -- Build label with icon and name
+        local label = ""
         
-        -- Add sized icon: <IMAGE:textureName,width,height> (no spaces inside tag)
-        local iconTag = " <IMAGE:" .. itemData.iconName .. "," .. iconSize .. "," .. iconSize .. "> "
-        table.insert(parts, iconTag)
+        -- Add item icon if available with fixed square size
+        if itemData.iconName and itemData.iconTexture then
+            local iconSize = FTE_Utils.TREE_CONNECTOR_SIZE
+            local iconTag = " <IMAGE:" .. itemData.iconName .. "," .. iconSize .. "," .. iconSize .. "> "
+            label = label .. iconTag
+        end
+        
+        -- Truncate item name if too long
+        local itemName = FTE_Utils.truncateText(itemData.displayName, MAX_ITEM_NAME_WIDTH)
+        label = label .. itemName
+        
+        -- Get colored multiplier value
+        local penaltyColor = getColorForPenalty(itemData.penaltyPercent)
+        local value = penaltyColor .. string.format("%.2f", itemData.multiplier)
+        
+        -- Use tree connector utility function with alignment
+        return FTE_Utils.getToolTipTextWithTreeImage(label, value, isLast or false, setXPosition)
+    else
+        -- Original simple dash format (fallback)
+        table.insert(parts, FTE_Utils.Colors.white)
+        table.insert(parts, "-")
+        
+        -- Add item icon if available with fixed square size
+        if itemData.iconName and itemData.iconTexture then
+            local iconSize = 16
+            local iconTag = " <IMAGE:" .. itemData.iconName .. "," .. iconSize .. "," .. iconSize .. "> "
+            table.insert(parts, iconTag)
+        end
+        
+        -- Truncate item name if too long
+        local itemName = FTE_Utils.truncateText(itemData.displayName, MAX_ITEM_NAME_WIDTH)
+        
+        -- Add item display name in white
+        table.insert(parts, FTE_Utils.Colors.white)
+        table.insert(parts, itemName)
+        table.insert(parts, ": <SPACE> ")
+        
+        -- Add colored multiplier value
+        local penaltyColor = getColorForPenalty(itemData.penaltyPercent)
+        table.insert(parts, penaltyColor)
+        table.insert(parts, string.format("%.2f", itemData.multiplier))
+        
+        -- Add line break
+        table.insert(parts, " <LINE> ")
+        
+        return table.concat(parts)
     end
-    
-    -- Add item display name in white
-    table.insert(parts, FTE_Utils.Colors.white)
-    table.insert(parts, itemData.displayName)
-    table.insert(parts, ": <SPACE> ")
-    
-    -- Add colored multiplier value
-    local penaltyColor = getColorForPenalty(itemData.penaltyPercent)
-    table.insert(parts, penaltyColor)
-    table.insert(parts, string.format("%.2f", itemData.multiplier))
-    
-    -- Add line break (color reset is included in FTE_Utils.Colors.white/bad/good)
-    table.insert(parts, " <LINE> ")
-    
-    return table.concat(parts)
 end
 
 ---Build complete items list text for tooltip
 ---@param character IsoPlayer The player character
----@param options table|nil Optional configuration {showZeroPenalty: boolean, sortMode: string}
+---@param options table|nil Optional configuration {showZeroPenalty: boolean, sortMode: string, useAlignment: boolean}
 ---@return string|nil richTextString Formatted rich text string or nil if no items
 local function buildItemsList(character, options)
     if not character then return nil end
@@ -204,16 +233,40 @@ local function buildItemsList(character, options)
     options = options or {}
     local showZeroPenalty = options.showZeroPenalty or false
     local sortMode = options.sortMode or "severity"
+    local useAlignment = options.useAlignment ~= false  -- Default to true
     
     local itemsData = getVisionAffectingItems(character, showZeroPenalty)
     if not itemsData or #itemsData == 0 then return nil end
     
     itemsData = sortItems(itemsData, sortMode)
     
+    -- Calculate max label width for alignment if enabled
+    local valueXPosition = nil
+    if useAlignment then
+        local labels = {}
+        local maxIconWidth = 0
+        
+        for _, itemData in ipairs(itemsData) do
+            -- Track icon presence for width calculation
+            if itemData.iconName and itemData.iconTexture then
+                maxIconWidth = math.max(maxIconWidth, FTE_Utils.TREE_CONNECTOR_SIZE)
+            end
+            
+            -- Use truncated name for width calculation (matching what will be rendered)
+            local truncatedName = FTE_Utils.truncateText(itemData.displayName, MAX_ITEM_NAME_WIDTH)
+            table.insert(labels, truncatedName)
+        end
+        
+        local maxLabelWidth = FTE_Utils.calculateMaxLabelWidth(labels)
+        -- Add icon width + padding to label width (IMAGE_PAD * 2 for both sides of icon)
+        valueXPosition = FTE_Utils.TREE_CONNECTOR_SIZE + maxIconWidth + (FTE_Utils.IMAGE_PAD * 2) + maxLabelWidth + 20
+    end
+    
     -- Build formatted text for all items
     local parts = {}
-    for _, itemData in ipairs(itemsData) do
-        local itemLine = formatItemEntry(itemData)
+    for i, itemData in ipairs(itemsData) do
+        local isLast = (i == #itemsData)
+        local itemLine = formatItemEntry(itemData, isLast, valueXPosition)
         table.insert(parts, itemLine)
     end
     
@@ -260,9 +313,11 @@ end
 
 ---Format a single item entry for display
 ---@param itemData table Item penalty data table
+---@param isLast boolean|nil Whether this is the last item (for tree connector)
+---@param setXPosition number|nil X position for value alignment
 ---@return string richTextLine Formatted rich text line
-function FTE_VisionAffectingItems:formatItemEntry(itemData)
-    return formatItemEntry(itemData)
+function FTE_VisionAffectingItems:formatItemEntry(itemData, isLast, setXPosition)
+    return formatItemEntry(itemData, isLast, setXPosition)
 end
 
 ---Get color for penalty value
@@ -312,7 +367,7 @@ return {
     -- Direct API exports for convenience
     getItems = function(character, options) return instance:getItems(character, options) end,
     buildItemsList = function(character, options) return instance:buildItemsList(character, options) end,
-    formatItemEntry = function(itemData) return instance:formatItemEntry(itemData) end,
+    formatItemEntry = function(itemData, isLast, setXPosition) return instance:formatItemEntry(itemData, isLast, setXPosition) end,
     getColorForPenalty = function(penaltyPercent) return instance:getColorForPenalty(penaltyPercent) end,
     hasVisionAffectingItems = function(character) return instance:hasVisionAffectingItems(character) end
 }

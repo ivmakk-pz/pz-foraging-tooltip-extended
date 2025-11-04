@@ -16,6 +16,23 @@ local PERCENTAGE_MULTIPLIER = 100
 -- Debug mode flag
 local DEBUG_MODE = false
 
+-- Tree connector image paths and size
+FTE_Utils.TREE_CONNECTOR_MIDDLE = "media/ui/TooltipStructureItems/middle_connector.png"
+FTE_Utils.TREE_CONNECTOR_LAST = "media/ui/TooltipStructureItems/last_connector.png"
+
+-- Image padding constant (matches ISRichTextPanel's IMAGE_PAD value)
+FTE_Utils.IMAGE_PAD = 5  -- Padding on each side of images in ISRichTextPanel
+
+-- Calculate tree connector size based on default tooltip font line height
+-- This ensures images scale properly with different font size settings
+local function getTreeConnectorSize()
+    local defaultFont = UIFont.NewSmall
+    local lineHeight = getTextManager():getFontFromEnum(defaultFont):getLineHeight()
+    return math.max(lineHeight, 10)  -- Minimum 10px as per ISRichTextPanel
+end
+
+FTE_Utils.TREE_CONNECTOR_SIZE = getTreeConnectorSize()  -- Dynamic size based on font settings
+
 -- Get game colors once at module load
 local GHC = getCore():getGoodHighlitedColor()
 local BHC = getCore():getBadHighlitedColor()
@@ -199,6 +216,93 @@ function FTE_Utils.getToolTipTextSubValue(text, value, suffix, prefix)
     
     return " " .. FTE_Utils.Colors.white .. actualPrefix .. text .. ": <SPACE> " .. 
            color .. FTE_Utils.formatNumber(value) .. actualSuffix .. " <LINE> "
+end
+
+---Generate tooltip text with tree connector image
+---@param text string The label text
+---@param value number|string The value to display (number for auto-formatting, or pre-formatted string with color)
+---@param isLast boolean Whether this is the last item (uses last_connector instead of middle_connector)
+---@param setXPosition number|nil Optional X position for value alignment (uses <SETX> for column alignment)
+---@return string tooltipText
+function FTE_Utils.getToolTipTextWithTreeImage(text, value, isLast, setXPosition)
+    local connectorImage = isLast and FTE_Utils.TREE_CONNECTOR_LAST or FTE_Utils.TREE_CONNECTOR_MIDDLE
+    local imageTag = " <IMAGE:" .. connectorImage .. "," .. FTE_Utils.TREE_CONNECTOR_SIZE .. "," .. FTE_Utils.TREE_CONNECTOR_SIZE .. "> "
+    
+    -- Handle both numeric values and pre-formatted strings
+    local formattedValue = ""
+    if type(value) == "number" then
+        local color = FTE_Utils.getRGBForValue(value)
+        formattedValue = color .. FTE_Utils.formatNumber(value)
+    else
+        formattedValue = tostring(value)  -- Already formatted string with color
+    end
+    
+    if setXPosition then
+        -- Use SETX for column-aligned values (like vanilla ISCraftingUI.lua)
+        return " " .. imageTag .. FTE_Utils.Colors.white .. text .. ": <SETX:" .. setXPosition .. "> " .. 
+               formattedValue .. " <LINE> "
+    else
+        -- Default: simple space separator
+        return " " .. imageTag .. FTE_Utils.Colors.white .. text .. ": <SPACE> " .. 
+               formattedValue .. " <LINE> "
+    end
+end
+
+---Calculate maximum label width for a set of labels (for column alignment)
+---@param labels table Array of label strings
+---@param font any UIFont enum (default: UIFont.NewSmall)
+---@return number maxWidth Maximum width in pixels
+function FTE_Utils.calculateMaxLabelWidth(labels, font)
+    font = font or UIFont.NewSmall
+    local maxWidth = 0
+    
+    for i = 1, #labels do
+        local labelWidth = getTextManager():MeasureStringX(font, labels[i])
+        maxWidth = math.max(maxWidth, labelWidth)
+    end
+    
+    return maxWidth
+end
+
+---Truncate text to fit within maximum width, adding ellipsis if needed
+---@param text string The text to truncate
+---@param maxWidth number Maximum width in pixels
+---@param font any UIFont enum (default: UIFont.NewSmall)
+---@return string truncatedText The truncated text with ellipsis if needed
+function FTE_Utils.truncateText(text, maxWidth, font)
+    font = font or UIFont.NewSmall
+    local textManager = getTextManager()
+    
+    -- Check if text fits
+    local textWidth = textManager:MeasureStringX(font, text)
+    if textWidth <= maxWidth then
+        return text
+    end
+    
+    -- Measure ellipsis width
+    local ellipsis = "..."
+    local ellipsisWidth = textManager:MeasureStringX(font, ellipsis)
+    local availableWidth = maxWidth - ellipsisWidth
+    
+    -- Binary search for the longest substring that fits
+    local left = 1
+    local right = #text
+    local bestFit = ""
+    
+    while left <= right do
+        local mid = math.floor((left + right) / 2)
+        local substring = string.sub(text, 1, mid)
+        local substringWidth = textManager:MeasureStringX(font, substring)
+        
+        if substringWidth <= availableWidth then
+            bestFit = substring
+            left = mid + 1
+        else
+            right = mid - 1
+        end
+    end
+    
+    return bestFit .. ellipsis
 end
 
 -- ===================================================================================================== --

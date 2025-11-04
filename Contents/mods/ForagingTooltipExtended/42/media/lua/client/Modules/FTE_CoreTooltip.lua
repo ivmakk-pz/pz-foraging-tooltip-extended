@@ -52,10 +52,12 @@ local function buildPenaltiesText(_modifiers, _otherPenalties, _shouldShowZeroPe
 	
 	-- Collect sub-items that should be displayed
 	local subItems = {}
+	local labels = {}
 	for i = 1, #penaltyItems do
 		local item = penaltyItems[i];
 		if _shouldShowZeroPenalties or math.abs(item.modifier - 1) >= 0.01 then
-			table.insert(subItems, FTE_Utils.getToolTipTextSubValue(getText(item.textKey), item.modifier, "", "- "));
+			table.insert(subItems, {text = getText(item.textKey), value = item.modifier})
+			table.insert(labels, getText(item.textKey) .. ":")
 		end
 	end
 	
@@ -64,14 +66,21 @@ local function buildPenaltiesText(_modifiers, _otherPenalties, _shouldShowZeroPe
 		return ""
 	end
 	
-	-- Build header + sub-items
+	-- Build header
 	local parts = {
 		" ", Colors.white, "E. ", getText("IGUI_FTE_SearchMode_Vision_Effect_State_Penalties"), 
 		": <SPACE> ", FTE_Utils.getRGBForValue(_otherPenalties), FTE_Utils.formatNumber(_otherPenalties), " <LINE> "
 	}
 	
+	-- Calculate max label width for aligned sub-items
+	local maxLabelWidth = FTE_Utils.calculateMaxLabelWidth(labels)
+	local valueXPosition = FTE_Utils.TREE_CONNECTOR_SIZE + maxLabelWidth + 20
+	
+	-- Add sub-items with tree connectors
 	for i = 1, #subItems do
-		table.insert(parts, subItems[i])
+		local item = subItems[i]
+		local isLast = (i == #subItems)
+		table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage(item.text, item.value, isLast, valueXPosition))
 	end
 	
 	return table.concat(parts);
@@ -159,8 +168,16 @@ local function buildVisionBonusDetailsText(_visionBonus, _modifiers)
         ": <SPACE> ", FTE_Utils.getRGBForValue(_visionBonus), FTE_Utils.formatNumber(_visionBonus), " <LINE> "
     }
     
-    table.insert(parts, FTE_Utils.getToolTipTextSubValue(getText("IGUI_SearchMode_Vision_Effect_Aiming"), _modifiers.aimBonus, "", "- "))
-    table.insert(parts, FTE_Utils.getToolTipTextSubValue(getText("IGUI_SearchMode_Vision_Effect_Crouching"), _modifiers.sneakBonus, "", "- "))
+    -- Calculate max label width for aligned sub-items
+    local labels = {
+        getText("IGUI_SearchMode_Vision_Effect_Aiming") .. ":",
+        getText("IGUI_SearchMode_Vision_Effect_Crouching") .. ":"
+    }
+    local maxLabelWidth = FTE_Utils.calculateMaxLabelWidth(labels)
+    local valueXPosition = FTE_Utils.TREE_CONNECTOR_SIZE + maxLabelWidth + 20
+    
+    table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage(getText("IGUI_SearchMode_Vision_Effect_Aiming"), _modifiers.aimBonus, false, valueXPosition))
+    table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage(getText("IGUI_SearchMode_Vision_Effect_Crouching"), _modifiers.sneakBonus, true, valueXPosition))
     
     return table.concat(parts)
 end
@@ -221,12 +238,25 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
     table.insert(parts, Colors.white);
     table.insert(parts, getText("IGUI_FTE_SearchMode_Vision_Effect_Search_Radius_Modifiers"));
     table.insert(parts, " <LINE> ");
-	table.insert(parts, FTE_Utils.getToolTipTextSubValue("[A] " .. getText("IGUI_FTE_SearchMode_Vision_Effect_Base_Skill_Traits"), baseRadius, "", "- "));
-	table.insert(parts, FTE_Utils.getToolTipTextSubValue("[B] " .. getText("IGUI_SearchMode_Vision_Effect_Weather"), weatherPenalty, "", "- "));
-	table.insert(parts, FTE_Utils.getToolTipTextSubValue("[C] " .. getText("IGUI_SearchMode_Vision_Effect_Darkness"), darknessMultiplier, "", "- "));
-	table.insert(parts, FTE_Utils.getToolTipTextSubValue("[D] " .. getText("IGUI_FTE_SearchMode_Vision_Effect_Best_Vision_Bonus"), visionBonus, "", "- "));
-	table.insert(parts, FTE_Utils.getToolTipTextSubValue("[E] " .. getText("IGUI_FTE_SearchMode_Vision_Effect_State_Penalties"), otherPenalties, "", "- "));
-	table.insert(parts, FTE_Utils.getToolTipTextSubValue("[F] " .. getText("IGUI_SearchMode_Vision_Effect_Clothing"), clothingPenalty, "", "- "));
+	
+	-- Calculate max label width for column alignment (like vanilla ISCraftingUI.lua)
+	local labels = {
+		"[A] " .. getText("IGUI_FTE_SearchMode_Vision_Effect_Base_Skill_Traits") .. ":",
+		"[B] " .. getText("IGUI_SearchMode_Vision_Effect_Weather") .. ":",
+		"[C] " .. getText("IGUI_SearchMode_Vision_Effect_Darkness") .. ":",
+		"[D] " .. getText("IGUI_FTE_SearchMode_Vision_Effect_Best_Vision_Bonus") .. ":",
+		"[E] " .. getText("IGUI_FTE_SearchMode_Vision_Effect_State_Penalties") .. ":",
+		"[F] " .. getText("IGUI_SearchMode_Vision_Effect_Clothing") .. ":"
+	}
+	local maxLabelWidth = FTE_Utils.calculateMaxLabelWidth(labels)
+	local valueXPosition = FTE_Utils.TREE_CONNECTOR_SIZE + maxLabelWidth + 20  -- Tree icon + label + padding
+	
+	table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage("[A] " .. getText("IGUI_FTE_SearchMode_Vision_Effect_Base_Skill_Traits"), baseRadius, false, valueXPosition));
+	table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage("[B] " .. getText("IGUI_SearchMode_Vision_Effect_Weather"), weatherPenalty, false, valueXPosition));
+	table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage("[C] " .. getText("IGUI_SearchMode_Vision_Effect_Darkness"), darknessMultiplier, false, valueXPosition));
+	table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage("[D] " .. getText("IGUI_FTE_SearchMode_Vision_Effect_Best_Vision_Bonus"), visionBonus, false, valueXPosition));
+	table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage("[E] " .. getText("IGUI_FTE_SearchMode_Vision_Effect_State_Penalties"), otherPenalties, false, valueXPosition));
+	table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage("[F] " .. getText("IGUI_SearchMode_Vision_Effect_Clothing"), clothingPenalty, true, valueXPosition));
 	table.insert(parts, " <LINE> ");
     
     -- D. Best Vision Bonus detailed breakdown
