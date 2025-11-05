@@ -25,15 +25,17 @@ local instance = FTE_CoreTooltip:new()
 local Colors = FTE_Utils.Colors
 
 local function buildFormulaString(_formulaData)
-	local parts = {};
+	local parts = {}
 	for i = 1, #_formulaData do
-		local data = _formulaData[i];
-		table.insert(parts, FTE_Utils.getRGBForValue(data.value) .. data.letter .. Colors.white);
+		local data = _formulaData[i]
+		table.insert(parts, FTE_Utils.getRGBForValue(data.value) .. data.letter .. Colors.white)
 		if i < #_formulaData then
-			table.insert(parts, " <SPACE> * <SPACE> ");
+			table.insert(parts, " <SPACE> * <SPACE> ")
 		end
 	end
-	return " " .. Colors.white .. "- Formula: <SPACE>" .. table.concat(parts) .. " <LINE> ";
+	
+	-- Use tree connector image tag constant
+	return " " .. FTE_Utils.TREE_CONNECTOR_LAST_TAG .. Colors.white .. "Formula: <SPACE>" .. table.concat(parts) .. " <LINE> "
 end
 
 ---Builds the penalties section for the tooltip
@@ -52,12 +54,10 @@ local function buildPenaltiesText(_modifiers, _otherPenalties, _shouldShowZeroPe
 	
 	-- Collect sub-items that should be displayed
 	local subItems = {}
-	local labels = {}
 	for i = 1, #penaltyItems do
 		local item = penaltyItems[i];
 		if _shouldShowZeroPenalties or math.abs(item.modifier - 1) >= 0.01 then
 			table.insert(subItems, {text = getText(item.textKey), value = item.modifier})
-			table.insert(labels, getText(item.textKey) .. ":")
 		end
 	end
 	
@@ -68,13 +68,11 @@ local function buildPenaltiesText(_modifiers, _otherPenalties, _shouldShowZeroPe
 	
 	-- Build header
 	local parts = {
-		" ", Colors.white, "E. ", getText("IGUI_FTE_SearchMode_Vision_Effect_State_Penalties"), 
-		": <SPACE> ", FTE_Utils.getRGBForValue(_otherPenalties), FTE_Utils.formatNumber(_otherPenalties), " <LINE> "
+		FTE_Utils.getToolTipHeaderWithAlignment("E. " .. getText("IGUI_FTE_SearchMode_Vision_Effect_State_Penalties"), _otherPenalties)
 	}
 	
-	-- Calculate max label width for aligned sub-items
-	local maxLabelWidth = FTE_Utils.calculateMaxLabelWidth(labels)
-	local valueXPosition = FTE_Utils.TREE_CONNECTOR_SIZE + maxLabelWidth + 20
+	-- Use global fixed alignment position
+	local valueXPosition = FTE_Utils.TOOLTIP_VALUE_X_POSITION
 	
 	-- Add sub-items with tree connectors
 	for i = 1, #subItems do
@@ -97,8 +95,7 @@ local function buildClothingEffectText(_modifiers, _character)
 	end
 	
 	local parts = {
-		" ", Colors.white, "F. ", getText("IGUI_SearchMode_Vision_Effect_Clothing"),
-		": <SPACE> ", FTE_Utils.getRGBForValue(_modifiers.clothingPenalty), FTE_Utils.formatNumber(_modifiers.clothingPenalty), " <LINE> "
+		FTE_Utils.getToolTipHeaderWithAlignment("F. " .. getText("IGUI_SearchMode_Vision_Effect_Clothing"), _modifiers.clothingPenalty)
 	}
 	
 	-- Add vision-affecting items if clothing penalty < 1.0
@@ -164,17 +161,11 @@ end
 ---@return string
 local function buildVisionBonusDetailsText(_visionBonus, _modifiers)
     local parts = {
-        " ", Colors.white, "D. ", getText("IGUI_FTE_SearchMode_Vision_Effect_Best_Vision_Bonus"),
-        ": <SPACE> ", FTE_Utils.getRGBForValue(_visionBonus), FTE_Utils.formatNumber(_visionBonus), " <LINE> "
+        FTE_Utils.getToolTipHeaderWithAlignment("D. " .. getText("IGUI_FTE_SearchMode_Vision_Effect_Best_Vision_Bonus"), _visionBonus)
     }
     
-    -- Calculate max label width for aligned sub-items
-    local labels = {
-        getText("IGUI_SearchMode_Vision_Effect_Aiming") .. ":",
-        getText("IGUI_SearchMode_Vision_Effect_Crouching") .. ":"
-    }
-    local maxLabelWidth = FTE_Utils.calculateMaxLabelWidth(labels)
-    local valueXPosition = FTE_Utils.TREE_CONNECTOR_SIZE + maxLabelWidth + 20
+    -- Use global fixed alignment position
+    local valueXPosition = FTE_Utils.TOOLTIP_VALUE_X_POSITION
     
     table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage(getText("IGUI_SearchMode_Vision_Effect_Aiming"), _modifiers.aimBonus, false, valueXPosition))
     table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage(getText("IGUI_SearchMode_Vision_Effect_Crouching"), _modifiers.sneakBonus, true, valueXPosition))
@@ -218,7 +209,7 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
 	-- Add main radius text
 	table.insert(parts, FTE_Utils.getToolTipTextRadius(getText("IGUI_SearchMode_Vision_Effect_Radius"), visionRadius, isAtMinRadius, isAtMaxRadius));
     
-    -- Formula string (A * B * C * D * E * F)
+	-- Formula string (A * B * C * D * E * F)
 	if FTE_ModOptions.shouldShowFormula() then
         local formulaData = {
             {letter = "A", value = baseRadius},
@@ -230,26 +221,15 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
         };
 
 		table.insert(parts, buildFormulaString(formulaData));
-	end
-
-    -- Add modifiers section
+	end    -- Add modifiers section
 	table.insert(parts, " <LINE> ");
     table.insert(parts, " ");
     table.insert(parts, Colors.white);
     table.insert(parts, getText("IGUI_FTE_SearchMode_Vision_Effect_Search_Radius_Modifiers"));
     table.insert(parts, " <LINE> ");
 	
-	-- Calculate max label width for column alignment (like vanilla ISCraftingUI.lua)
-	local labels = {
-		"[A] " .. getText("IGUI_FTE_SearchMode_Vision_Effect_Base_Skill_Traits") .. ":",
-		"[B] " .. getText("IGUI_SearchMode_Vision_Effect_Weather") .. ":",
-		"[C] " .. getText("IGUI_SearchMode_Vision_Effect_Darkness") .. ":",
-		"[D] " .. getText("IGUI_FTE_SearchMode_Vision_Effect_Best_Vision_Bonus") .. ":",
-		"[E] " .. getText("IGUI_FTE_SearchMode_Vision_Effect_State_Penalties") .. ":",
-		"[F] " .. getText("IGUI_SearchMode_Vision_Effect_Clothing") .. ":"
-	}
-	local maxLabelWidth = FTE_Utils.calculateMaxLabelWidth(labels)
-	local valueXPosition = FTE_Utils.TREE_CONNECTOR_SIZE + maxLabelWidth + 20  -- Tree icon + label + padding
+	-- Use global fixed alignment position for all values
+	local valueXPosition = FTE_Utils.TOOLTIP_VALUE_X_POSITION
 	
 	table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage("[A] " .. getText("IGUI_FTE_SearchMode_Vision_Effect_Base_Skill_Traits"), baseRadius, false, valueXPosition));
 	table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage("[B] " .. getText("IGUI_SearchMode_Vision_Effect_Weather"), weatherPenalty, false, valueXPosition));

@@ -23,15 +23,28 @@ FTE_Utils.TREE_CONNECTOR_LAST = "media/ui/TooltipStructureItems/last_connector.p
 -- Image padding constant (matches ISRichTextPanel's IMAGE_PAD value)
 FTE_Utils.IMAGE_PAD = 5  -- Padding on each side of images in ISRichTextPanel
 
--- Calculate tree connector size based on default tooltip font line height
--- This ensures images scale properly with different font size settings
-local function getTreeConnectorSize()
+-- Global alignment position for tooltip values (fixed right-aligned position)
+-- Calculated to accommodate max possible value width like "+100.00%" or "10.50"
+FTE_Utils.TOOLTIP_VALUE_X_POSITION = 180  -- Fixed X position for all tooltip values
+
+-- Calculate tree connector dimensions based on default tooltip font line height
+-- Height matches line height, width is fixed at 8px for thinner connector lines
+local function getTreeConnectorDimensions()
     local defaultFont = UIFont.NewSmall
     local lineHeight = getTextManager():getFontFromEnum(defaultFont):getLineHeight()
-    return math.max(lineHeight, 10)  -- Minimum 10px as per ISRichTextPanel
+    local height = math.max(lineHeight, 10)  -- Minimum 10px as per ISRichTextPanel
+    local width = 4  -- Fixed width for thinner tree connector lines
+    return width, height
 end
 
-FTE_Utils.TREE_CONNECTOR_SIZE = getTreeConnectorSize()  -- Dynamic size based on font settings
+local treeConnectorWidth, treeConnectorHeight = getTreeConnectorDimensions()
+FTE_Utils.TREE_CONNECTOR_WIDTH = treeConnectorWidth    -- Width of tree connector images
+FTE_Utils.TREE_CONNECTOR_HEIGHT = treeConnectorHeight  -- Height matches font line height
+FTE_Utils.TREE_CONNECTOR_SIZE = treeConnectorHeight    -- Legacy constant (use WIDTH/HEIGHT instead)
+
+-- Pre-built tree connector image tags for convenience
+FTE_Utils.TREE_CONNECTOR_MIDDLE_TAG = " <IMAGE:" .. FTE_Utils.TREE_CONNECTOR_MIDDLE .. "," .. treeConnectorWidth .. "," .. treeConnectorHeight .. "> "
+FTE_Utils.TREE_CONNECTOR_LAST_TAG = " <IMAGE:" .. FTE_Utils.TREE_CONNECTOR_LAST .. "," .. treeConnectorWidth .. "," .. treeConnectorHeight .. "> "
 
 -- Get game colors once at module load
 local GHC = getCore():getGoodHighlitedColor()
@@ -225,8 +238,7 @@ end
 ---@param setXPosition number|nil Optional X position for value alignment (uses <SETX> for column alignment)
 ---@return string tooltipText
 function FTE_Utils.getToolTipTextWithTreeImage(text, value, isLast, setXPosition)
-    local connectorImage = isLast and FTE_Utils.TREE_CONNECTOR_LAST or FTE_Utils.TREE_CONNECTOR_MIDDLE
-    local imageTag = " <IMAGE:" .. connectorImage .. "," .. FTE_Utils.TREE_CONNECTOR_SIZE .. "," .. FTE_Utils.TREE_CONNECTOR_SIZE .. "> "
+    local imageTag = isLast and FTE_Utils.TREE_CONNECTOR_LAST_TAG or FTE_Utils.TREE_CONNECTOR_MIDDLE_TAG
     
     -- Handle both numeric values and pre-formatted strings
     local formattedValue = ""
@@ -246,6 +258,16 @@ function FTE_Utils.getToolTipTextWithTreeImage(text, value, isLast, setXPosition
         return " " .. imageTag .. FTE_Utils.Colors.white .. text .. ": <SPACE> " .. 
                formattedValue .. " <LINE> "
     end
+end
+
+---Generate tooltip header text with aligned value (for section headers like D, E, F)
+---@param text string The header text (e.g., "D. Best Vision Bonus")
+---@param value number The value to display
+---@return string tooltipText
+function FTE_Utils.getToolTipHeaderWithAlignment(text, value)
+    local color = FTE_Utils.getRGBForValue(value)
+    return " " .. FTE_Utils.Colors.white .. text .. ": <SETX:" .. FTE_Utils.TOOLTIP_VALUE_X_POSITION .. "> " ..
+           color .. FTE_Utils.formatNumber(value) .. " <LINE> "
 end
 
 ---Calculate maximum label width for a set of labels (for column alignment)
@@ -280,7 +302,7 @@ function FTE_Utils.truncateText(text, maxWidth, font)
     end
     
     -- Measure ellipsis width
-    local ellipsis = "..."
+    local ellipsis = ".."
     local ellipsisWidth = textManager:MeasureStringX(font, ellipsis)
     local availableWidth = maxWidth - ellipsisWidth
     

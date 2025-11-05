@@ -1,5 +1,6 @@
 IGUI_FTE_EN = {
     IGUI_FTE_SearchMode_Vision_Effect_Search_Radius_Modifiers = "Search Radius Modifiers",
+    IGUI_FTE_SearchMode_Vision_Effect_Formula = "Formula",
     IGUI_FTE_SearchMode_Vision_Effect_Base_Skill_Traits = "Base (Skill + Traits)",
     IGUI_FTE_SearchMode_Vision_Effect_Best_Vision_Bonus = "Best Vision Bonus",
     IGUI_FTE_SearchMode_Vision_Effect_State_Penalties = "State Penalties",

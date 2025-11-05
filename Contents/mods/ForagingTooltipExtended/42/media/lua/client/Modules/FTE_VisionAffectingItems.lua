@@ -240,26 +240,10 @@ local function buildItemsList(character, options)
     
     itemsData = sortItems(itemsData, sortMode)
     
-    -- Calculate max label width for alignment if enabled
+    -- Use global fixed alignment position (or calculate if alignment disabled)
     local valueXPosition = nil
     if useAlignment then
-        local labels = {}
-        local maxIconWidth = 0
-        
-        for _, itemData in ipairs(itemsData) do
-            -- Track icon presence for width calculation
-            if itemData.iconName and itemData.iconTexture then
-                maxIconWidth = math.max(maxIconWidth, FTE_Utils.TREE_CONNECTOR_SIZE)
-            end
-            
-            -- Use truncated name for width calculation (matching what will be rendered)
-            local truncatedName = FTE_Utils.truncateText(itemData.displayName, MAX_ITEM_NAME_WIDTH)
-            table.insert(labels, truncatedName)
-        end
-        
-        local maxLabelWidth = FTE_Utils.calculateMaxLabelWidth(labels)
-        -- Add icon width + padding to label width (IMAGE_PAD * 2 for both sides of icon)
-        valueXPosition = FTE_Utils.TREE_CONNECTOR_SIZE + maxIconWidth + (FTE_Utils.IMAGE_PAD * 2) + maxLabelWidth + 20
+        valueXPosition = FTE_Utils.TOOLTIP_VALUE_X_POSITION
     end
     
     -- Build formatted text for all items
