@@ -1,11 +1,5 @@
 UI_FTE_EN = {
     UI_options_FTE_title = "Foraging Tooltip Extended",
-    UI_options_FTE_showZeroPenalties = "Show Zero State Penalties",
-    UI_options_FTE_showZeroPenalties_tooltip = "When enabled, state penalty sub-items with 0 values will be displayed in tooltips (clothing, exhaustion, panic, body damage, movement)",
-    UI_options_FTE_showFormula = "Show Formula",
-    UI_options_FTE_showFormula_tooltip = "When enabled, displays the radius calculation formula (A * B * C * D * E) in the tooltip",
-    UI_options_FTE_showVisionBonusDetails = "Show Vision Bonus Details",
-    UI_options_FTE_showVisionBonusDetails_tooltip = "When enabled, displays detailed breakdown for Best Vision Bonus even when modifier = 1 (no effect for radius)",
     UI_options_FTE_showPersistentRadius = "Show Radius before Eye Icon",
     UI_options_FTE_showPersistentRadius_tooltip = "Shows current search radius next to the eye icon (always visible, no hover required)",
 }

@@ -24,26 +24,11 @@ local instance = FTE_CoreTooltip:new()
 
 local Colors = FTE_Utils.Colors
 
-local function buildFormulaString(_formulaData)
-	local parts = {}
-	for i = 1, #_formulaData do
-		local data = _formulaData[i]
-		table.insert(parts, FTE_Utils.getRGBForValue(data.value) .. data.letter .. Colors.white)
-		if i < #_formulaData then
-			table.insert(parts, " <SPACE> * <SPACE> ")
-		end
-	end
-	
-	-- Use tree connector image tag constant
-	return " " .. FTE_Utils.TREE_CONNECTOR_LAST_TAG .. Colors.white .. "Formula: <SPACE>" .. table.concat(parts) .. " <LINE> "
-end
-
 ---Builds the penalties section for the tooltip
 ---@param _modifiers table
 ---@param _otherPenalties number
----@param _shouldShowZeroPenalties boolean
 ---@return string
-local function buildPenaltiesText(_modifiers, _otherPenalties, _shouldShowZeroPenalties)
+local function buildPenaltiesText(_modifiers, _otherPenalties)
 	-- Removed clothing from this section - it now has its own F section
 	local penaltyItems = {
 		{modifier = _modifiers.exhaustionPenalty, textKey = "IGUI_FTE_SearchMode_Vision_Effect_Exhaustion"},
@@ -52,11 +37,11 @@ local function buildPenaltiesText(_modifiers, _otherPenalties, _shouldShowZeroPe
 		{modifier = _modifiers.movementPenalty, textKey = "IGUI_SearchMode_Vision_Effect_Movement"}
 	}
 	
-	-- Collect sub-items that should be displayed
+	-- Collect sub-items that should be displayed (only show items with impact)
 	local subItems = {}
 	for i = 1, #penaltyItems do
 		local item = penaltyItems[i];
-		if _shouldShowZeroPenalties or math.abs(item.modifier - 1) >= 0.01 then
+		if math.abs(item.modifier - 1) >= 0.01 then
 			table.insert(subItems, {text = getText(item.textKey), value = item.modifier})
 		end
 	end
@@ -131,46 +116,32 @@ local function getHungerBonus(character)
 	return hungerBonus;
 end
 
----@param character IsoGameCharacter
+---Builds the A-F modifiers section with conditional display
+---@param _modifierDefs table Array of modifier definitions with letter, value, textKey, showAlways
+---@param _valueXPosition number X position for value alignment
 ---@return string
-local function addFoodDetectionSection(character)
-	local hungerBonus = getHungerBonus(character)
-	
-	-- Hide section if no bonus
-	if hungerBonus <= 1.01 then
-		return ""
+local function buildModifiersSection(_modifierDefs, _valueXPosition)
+	-- Filter and build display list (skip items with no impact unless showAlways)
+	local modifierItems = {}
+	for i = 1, #_modifierDefs do
+		local def = _modifierDefs[i]
+		if def.showAlways or math.abs(def.value - 1) >= 0.01 then
+			table.insert(modifierItems, {
+				label = "[" .. def.letter .. "] " .. getText(def.textKey),
+				value = def.value
+			})
+		end
 	end
-    
-	local result = " " .. Colors.white .. getText("IGUI_FTE_Food_Detection_Header") .. " (" .. getText("IGUI_StatsAndBody_Hunger") .. ")" .. " <LINE> "
 	
-	if hungerBonus > 1.01 then
-		local bonusPercent = (hungerBonus - 1.0) * 100
-		result = result .. " " .. Colors.white .. "- " .. getText("IGUI_FTE_Food_Detection_Bonus") .. 
-				": <SPACE> " .. Colors.good .. "+" .. FTE_Utils.formatNumber(bonusPercent) .. "% <LINE> "
-	else
-		result = result .. " " .. Colors.white .. "- " .. getText("IGUI_FTE_Food_Detection_Bonus") .. 
-				": <SPACE> " .. Colors.grey .. "0% <LINE> "
+	-- Render all filtered items with proper isLast detection
+	local parts = {}
+	for i = 1, #modifierItems do
+		local item = modifierItems[i]
+		local isLast = (i == #modifierItems)
+		table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage(item.label, item.value, isLast, _valueXPosition))
 	end
-    
-    return result
-end
-
----Builds the vision bonus details section for the tooltip
----@param _visionBonus number
----@param _modifiers table
----@return string
-local function buildVisionBonusDetailsText(_visionBonus, _modifiers)
-    local parts = {
-        FTE_Utils.getToolTipHeaderWithAlignment("D. " .. getText("IGUI_FTE_SearchMode_Vision_Effect_Best_Vision_Bonus"), _visionBonus)
-    }
-    
-    -- Use global fixed alignment position
-    local valueXPosition = FTE_Utils.TOOLTIP_VALUE_X_POSITION
-    
-    table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage(getText("IGUI_SearchMode_Vision_Effect_Aiming"), _modifiers.aimBonus, false, valueXPosition))
-    table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage(getText("IGUI_SearchMode_Vision_Effect_Crouching"), _modifiers.sneakBonus, true, valueXPosition))
-    
-    return table.concat(parts)
+	
+	return table.concat(parts)
 end
 
 -- ===================================================================================================== --
@@ -208,46 +179,27 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
 	
 	-- Add main radius text
 	table.insert(parts, FTE_Utils.getToolTipTextRadius(getText("IGUI_SearchMode_Vision_Effect_Radius"), visionRadius, isAtMinRadius, isAtMaxRadius));
-    
-	-- Formula string (A * B * C * D * E * F)
-	if FTE_ModOptions.shouldShowFormula() then
-        local formulaData = {
-            {letter = "A", value = baseRadius},
-            {letter = "B", value = weatherPenalty},
-            {letter = "C", value = darknessMultiplier},
-            {letter = "D", value = visionBonus},
-            {letter = "E", value = otherPenalties},
-            {letter = "F", value = clothingPenalty}
-        };
-
-		table.insert(parts, buildFormulaString(formulaData));
-	end    -- Add modifiers section
-	table.insert(parts, " <LINE> ");
-    table.insert(parts, " ");
-    table.insert(parts, Colors.white);
-    table.insert(parts, getText("IGUI_FTE_SearchMode_Vision_Effect_Search_Radius_Modifiers"));
-    table.insert(parts, " <LINE> ");
 	
 	-- Use global fixed alignment position for all values
 	local valueXPosition = FTE_Utils.TOOLTIP_VALUE_X_POSITION
 	
-	table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage("[A] " .. getText("IGUI_FTE_SearchMode_Vision_Effect_Base_Skill_Traits"), baseRadius, false, valueXPosition));
-	table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage("[B] " .. getText("IGUI_SearchMode_Vision_Effect_Weather"), weatherPenalty, false, valueXPosition));
-	table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage("[C] " .. getText("IGUI_SearchMode_Vision_Effect_Darkness"), darknessMultiplier, false, valueXPosition));
-	table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage("[D] " .. getText("IGUI_FTE_SearchMode_Vision_Effect_Best_Vision_Bonus"), visionBonus, false, valueXPosition));
-	table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage("[E] " .. getText("IGUI_FTE_SearchMode_Vision_Effect_State_Penalties"), otherPenalties, false, valueXPosition));
-	table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage("[F] " .. getText("IGUI_SearchMode_Vision_Effect_Clothing"), clothingPenalty, true, valueXPosition));
+	-- Define A-F modifiers data structure
+	local modifierDefs = {
+		{letter = "A", value = baseRadius, textKey = "IGUI_FTE_SearchMode_Vision_Effect_Base_Skill_Traits", showAlways = true},
+		{letter = "B", value = weatherPenalty, textKey = "IGUI_SearchMode_Vision_Effect_Weather"},
+		{letter = "C", value = darknessMultiplier, textKey = "IGUI_SearchMode_Vision_Effect_Darkness"},
+		{letter = "D", value = visionBonus, textKey = modifiers.aimBonus >= modifiers.sneakBonus and "IGUI_SearchMode_Vision_Effect_Aiming" or "IGUI_SearchMode_Vision_Effect_Crouching"},
+		{letter = "E", value = otherPenalties, textKey = "IGUI_FTE_SearchMode_Vision_Effect_State_Penalties"},
+		{letter = "F", value = clothingPenalty, textKey = "IGUI_SearchMode_Vision_Effect_Clothing"}
+	}
+	
+	-- Build and add A-F modifiers section
+	table.insert(parts, buildModifiersSection(modifierDefs, valueXPosition))
 	table.insert(parts, " <LINE> ");
-    
-    -- D. Best Vision Bonus detailed breakdown
-	if FTE_ModOptions.shouldShowVisionBonusDetails() or math.abs(visionBonus - 1) >= 0.01 then
-        table.insert(parts, buildVisionBonusDetailsText(visionBonus, modifiers));
-		table.insert(parts, " <LINE> ")
-	end
 
     -- E. State Penalties detailed breakdown
-	if FTE_ModOptions.shouldShowZeroPenalties() or math.abs(otherPenalties - 1) >= 0.01 then
-        local penaltiesSection = buildPenaltiesText(modifiers, otherPenalties, FTE_ModOptions.shouldShowZeroPenalties());
+	if math.abs(otherPenalties - 1) >= 0.01 then
+        local penaltiesSection = buildPenaltiesText(modifiers, otherPenalties);
         if penaltiesSection and penaltiesSection ~= "" then
             table.insert(parts, penaltiesSection);
             table.insert(parts, " <LINE> ");
@@ -261,24 +213,39 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
 		table.insert(parts, " <LINE> ");
 	end
 
-	-- Add food detection section
-	local foodDetectionSection = addFoodDetectionSection(zoneDisplay.character)
-	if foodDetectionSection and foodDetectionSection ~= "" then
-		table.insert(parts, foodDetectionSection);
-		table.insert(parts, " <LINE> ");
-	end
-
-    -- Add trait/profession bonuses
+    -- Add trait/profession bonuses section
     local totalBonus = modifiers.professionBonus + modifiers.traitBonus
     table.insert(parts, Colors.white);
     table.insert(parts, getText("IGUI_SearchMode_Vision_Effect_Trait_Profession_Bonuses"));
     table.insert(parts, " <LINE> ");
-    table.insert(parts, Colors.white);
-    table.insert(parts, getText("IGUI_SearchMode_Vision_Effect_Bonus_Radius"));
-    table.insert(parts, ": <SPACE> ");
-    table.insert(parts, FTE_Utils.getRGBForTooltip(totalBonus > 0, totalBonus == 0));
-    table.insert(parts, string.format("%+.2f", totalBonus));
-    table.insert(parts, " <LINE> ");
+    
+    -- Use global fixed alignment position
+    local valueXPosition = FTE_Utils.TOOLTIP_VALUE_X_POSITION
+    
+    -- Add food detection bonus first (if applicable)
+    local hungerBonus = getHungerBonus(zoneDisplay.character)
+    local hasFoodDetection = hungerBonus > 1.01
+    if hasFoodDetection then
+        local foodDetectionValue = hungerBonus - 1.0
+        local formattedFoodBonus = Colors.good .. FTE_Utils.formatPercentShort(foodDetectionValue) .. "%"
+        table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage(
+            getText("IGUI_FTE_Food_Detection_Header") .. " (" .. getText("IGUI_StatsAndBody_Hunger") .. ")",
+            formattedFoodBonus,
+            false,  -- not last (more items follow)
+            valueXPosition
+        ))
+    end
+    
+    -- Format total bonus with proper color and sign (1 decimal place)
+    local bonusColor = FTE_Utils.getRGBForTooltip(totalBonus > 0, totalBonus == 0)
+    local formattedTotalBonus = bonusColor .. string.format("%+.1f", totalBonus)
+    
+    table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage(
+        getText("IGUI_SearchMode_Vision_Effect_Bonus_Radius"),
+        formattedTotalBonus,
+        false,  -- not last (more items follow)
+        valueXPosition
+    ))
 	
 	-- Collect character effect items for sorting
 	local characterItems = {};
@@ -301,12 +268,31 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
 	-- Sort character items (non-zero first, then zero)
 	FTE_Utils.sortTooltipItems(characterItems)
 
-    -- Add sorted character items to text
+    -- Filter items that should be displayed and add them to text with tree structure
+	local displayItems = {}
 	for i = 1, #characterItems do
-		local item = characterItems[i];
+		local item = characterItems[i]
 		if not item.isBonus or item.value ~= 0 then
-			table.insert(parts, FTE_Utils.getToolTipText(item.text, item.value, item.isBonus));
+			table.insert(displayItems, item)
 		end
+	end
+	
+	-- Add filtered items with proper isLast detection
+	for i = 1, #displayItems do
+		local item = displayItems[i]
+		local isLast = (i == #displayItems)  -- Now correctly detects last displayed item
+		
+		-- Format percentage value with proper color (using short format)
+		local valueColor = item.isBonus and FTE_Utils.getRGBForTooltip(item.value > 0, item.value == 0) 
+		                                  or FTE_Utils.getRGBForTooltip(item.value < 0, item.value == 0)
+		local formattedValue = valueColor .. FTE_Utils.formatPercentShort(item.value) .. "%"
+		
+		table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage(
+			item.text,
+			formattedValue,
+			isLast,
+			valueXPosition
+		))
 	end
 
 	return table.concat(parts);

@@ -24,7 +24,8 @@ FTE_Utils.TREE_CONNECTOR_LAST = "media/ui/TooltipStructureItems/last_connector.p
 FTE_Utils.IMAGE_PAD = 5  -- Padding on each side of images in ISRichTextPanel
 
 -- Global alignment position for tooltip values (fixed right-aligned position)
--- Calculated to accommodate max possible value width like "+100.00%" or "10.50"
+-- Calculated to accommodate max possible value width like "+100%" or "10.50"
+-- Lower value = values start earlier (more space for the value itself)
 FTE_Utils.TOOLTIP_VALUE_X_POSITION = 180  -- Fixed X position for all tooltip values
 
 -- Calculate tree connector dimensions based on default tooltip font line height
@@ -134,6 +135,22 @@ function FTE_Utils.formatPercent(float)
         return "0"
     end
     return string.format("%+.2f", float * PERCENTAGE_MULTIPLIER)
+end
+
+---Format percentage values for bonus sections (shorter format)
+---Shows integers without decimals (e.g., "+10%"), floats with 1 decimal (e.g., "+5.5%")
+---@param float number The decimal value (e.g., 0.1 for 10%, 0.055 for 5.5%)
+---@return string formattedPercent
+function FTE_Utils.formatPercentShort(float)
+    if float == 0 then
+        return "0"
+    end
+    local percent = float * PERCENTAGE_MULTIPLIER
+    -- Check if it's effectively an integer (within 0.01 precision)
+    if math.abs(percent - math.floor(percent + 0.5)) < 0.01 then
+        return string.format("%+d", math.floor(percent + 0.5))
+    end
+    return string.format("%+.1f", percent)
 end
 
 -- ===================================================================================================== --
@@ -250,8 +267,8 @@ function FTE_Utils.getToolTipTextWithTreeImage(text, value, isLast, setXPosition
     end
     
     if setXPosition then
-        -- Use SETX for column-aligned values (like vanilla ISCraftingUI.lua)
-        return " " .. imageTag .. FTE_Utils.Colors.white .. text .. ": <SETX:" .. setXPosition .. "> " .. 
+        -- Use SETX for column-aligned values - place SETX before the colon to prevent wrapping
+        return " " .. imageTag .. FTE_Utils.Colors.white .. text .. " <SETX:" .. setXPosition .. "> " .. 
                formattedValue .. " <LINE> "
     else
         -- Default: simple space separator
@@ -266,7 +283,7 @@ end
 ---@return string tooltipText
 function FTE_Utils.getToolTipHeaderWithAlignment(text, value)
     local color = FTE_Utils.getRGBForValue(value)
-    return " " .. FTE_Utils.Colors.white .. text .. ": <SETX:" .. FTE_Utils.TOOLTIP_VALUE_X_POSITION .. "> " ..
+    return " " .. FTE_Utils.Colors.white .. text .. " <SETX:" .. FTE_Utils.TOOLTIP_VALUE_X_POSITION .. "> " ..
            color .. FTE_Utils.formatNumber(value) .. " <LINE> "
 end
 
