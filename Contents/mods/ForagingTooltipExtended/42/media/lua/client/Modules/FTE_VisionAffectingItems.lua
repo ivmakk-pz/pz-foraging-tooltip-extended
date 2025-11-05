@@ -1,5 +1,5 @@
--- FTE_VisionAffectingItems.lua - Vision-Affecting Items Display Module
--- Displays clothing/items that affect search radius as level 2 items under the Clothing penalty line
+-- FTE_VisionAffectingItems.lua - Vision-Affecting Items Data Module
+-- Provides data about clothing/items that affect search radius
 
 local FTE_ModuleBase = require("Core/FTE_ModuleBase")
 local FTE_Utils = require("FTE_Utils")
@@ -27,6 +27,9 @@ local MIN_PENALTY_THRESHOLD = 0.01  -- 0.01% minimum penalty to display
 
 -- Maximum width for item names in pixels (prevents long names from breaking layout)
 local MAX_ITEM_NAME_WIDTH = 120
+
+-- Item icon size for tooltip display (standard inventory icon size)
+local ITEM_ICON_SIZE = 16
 
 -- ===================================================================================================== --
 -- DATA COLLECTION FUNCTIONS
@@ -157,104 +160,36 @@ local function getColorForPenalty(penaltyPercent)
 end
 
 -- ===================================================================================================== --
--- RICH TEXT TOOLTIP BUILDER
+-- DISPLAY FORMATTING FUNCTIONS
 -- ===================================================================================================== --
 
----Format a single item entry for tooltip display
----@param itemData table Item penalty data (from calculateItemPenalty)
----@param isLast boolean|nil Whether this is the last item in the list (for tree connector)
----@param setXPosition number|nil X position for value alignment (uses tree connector if provided)
----@return string richTextLine Formatted rich text line for this item
-local function formatItemEntry(itemData, isLast, setXPosition)
-    local parts = {}
+---Format worn items for tooltip display
+---@param itemsData table Array of item penalty data
+---@return table displayItems Array of formatted display items with text and value
+local function formatWornItemsForDisplay(itemsData)
+    local displayItems = {}
     
-    -- Use tree connectors if alignment position is provided, otherwise use simple dash
-    if setXPosition then
-        -- Build label with icon and name
-        local label = ""
+    for i = 1, #itemsData do
+        local itemData = itemsData[i]
         
-        -- Add item icon if available with fixed square size
+        -- Build label with icon (fixed size for worn items)
+        local label = ""
         if itemData.iconName and itemData.iconTexture then
-            local iconSize = FTE_Utils.TREE_CONNECTOR_SIZE
-            local iconTag = " <IMAGE:" .. itemData.iconName .. "," .. iconSize .. "," .. iconSize .. "> "
-            label = label .. iconTag
+            label = " <IMAGE:" .. itemData.iconName .. "," .. ITEM_ICON_SIZE .. "," .. ITEM_ICON_SIZE .. "> "
         end
         
-        -- Truncate item name if too long
+        -- Truncate item name if too long to prevent text overlap
         local itemName = FTE_Utils.truncateText(itemData.displayName, MAX_ITEM_NAME_WIDTH)
         label = label .. itemName
         
-        -- Get colored multiplier value
-        local penaltyColor = getColorForPenalty(itemData.penaltyPercent)
-        local value = penaltyColor .. string.format("%.2f", itemData.multiplier)
-        
-        -- Use tree connector utility function with alignment
-        return FTE_Utils.getToolTipTextWithTreeImage(label, value, isLast or false, setXPosition)
-    else
-        -- Original simple dash format (fallback)
-        table.insert(parts, FTE_Utils.Colors.white)
-        table.insert(parts, "-")
-        
-        -- Add item icon if available with fixed square size
-        if itemData.iconName and itemData.iconTexture then
-            local iconSize = 16
-            local iconTag = " <IMAGE:" .. itemData.iconName .. "," .. iconSize .. "," .. iconSize .. "> "
-            table.insert(parts, iconTag)
-        end
-        
-        -- Truncate item name if too long
-        local itemName = FTE_Utils.truncateText(itemData.displayName, MAX_ITEM_NAME_WIDTH)
-        
-        -- Add item display name in white
-        table.insert(parts, FTE_Utils.Colors.white)
-        table.insert(parts, itemName)
-        table.insert(parts, ": <SPACE> ")
-        
-        -- Add colored multiplier value
-        local penaltyColor = getColorForPenalty(itemData.penaltyPercent)
-        table.insert(parts, penaltyColor)
-        table.insert(parts, string.format("%.2f", itemData.multiplier))
-        
-        -- Add line break
-        table.insert(parts, " <LINE> ")
-        
-        return table.concat(parts)
-    end
-end
-
----Build complete items list text for tooltip
----@param character IsoPlayer The player character
----@param options table|nil Optional configuration {showZeroPenalty: boolean, sortMode: string, useAlignment: boolean}
----@return string|nil richTextString Formatted rich text string or nil if no items
-local function buildItemsList(character, options)
-    if not character then return nil end
-    
-    -- Get sorted items data
-    options = options or {}
-    local showZeroPenalty = options.showZeroPenalty or false
-    local sortMode = options.sortMode or "severity"
-    local useAlignment = options.useAlignment ~= false  -- Default to true
-    
-    local itemsData = getVisionAffectingItems(character, showZeroPenalty)
-    if not itemsData or #itemsData == 0 then return nil end
-    
-    itemsData = sortItems(itemsData, sortMode)
-    
-    -- Use global fixed alignment position (or calculate if alignment disabled)
-    local valueXPosition = nil
-    if useAlignment then
-        valueXPosition = FTE_Utils.TOOLTIP_VALUE_X_POSITION
+        table.insert(displayItems, {
+            text = label,
+            value = itemData.multiplier,
+            showAlways = false
+        })
     end
     
-    -- Build formatted text for all items
-    local parts = {}
-    for i, itemData in ipairs(itemsData) do
-        local isLast = (i == #itemsData)
-        local itemLine = formatItemEntry(itemData, isLast, valueXPosition)
-        table.insert(parts, itemLine)
-    end
-    
-    return table.concat(parts)
+    return displayItems
 end
 
 -- ===================================================================================================== --
@@ -286,22 +221,35 @@ function FTE_VisionAffectingItems:getItems(character, options)
     return sortItems(itemsData, sortMode)
 end
 
----Build formatted rich text list of vision-affecting items
+---Get vision-affecting worn items formatted for tooltip display
 ---@param character IsoPlayer The player character
 ---@param options table|nil Optional configuration {showZeroPenalty: boolean, sortMode: string}
----@return string|nil richTextString Formatted rich text string or nil if no items
-function FTE_VisionAffectingItems:buildItemsList(character, options)
-    if not self:isActive() then return nil end
-    return buildItemsList(character, options)
+---@return table displayItems Array of formatted display items with text and value
+function FTE_VisionAffectingItems:getFormattedWornItems(character, options)
+    if not self:isActive() then return {} end
+    
+    local itemsData = self:getItems(character, options)
+    return formatWornItemsForDisplay(itemsData)
 end
 
----Format a single item entry for display
----@param itemData table Item penalty data table
----@param isLast boolean|nil Whether this is the last item (for tree connector)
----@param setXPosition number|nil X position for value alignment
----@return string richTextLine Formatted rich text line
-function FTE_VisionAffectingItems:formatItemEntry(itemData, isLast, setXPosition)
-    return formatItemEntry(itemData, isLast, setXPosition)
+---Get vision-affecting worn items formatted for display (convenience wrapper)
+---Returns empty array if clothing penalty is negligible or module is inactive
+---@param character IsoPlayer The player character
+---@param clothingPenalty number The clothing penalty modifier
+---@return table displayItems Array of formatted display items with text and value
+function FTE_VisionAffectingItems:getWornItemsForTooltip(character, clothingPenalty)
+    if not self:isActive() then return {} end
+    
+    -- Only get items if clothing penalty is significant
+    if math.abs(clothingPenalty - 1) < 0.01 then
+        return {}
+    end
+    
+    local options = {
+        showZeroPenalty = false,  -- Only show items with actual penalties
+        sortMode = "severity"     -- Sort by penalty severity (highest first)
+    }
+    return self:getFormattedWornItems(character, options)
 end
 
 ---Get color for penalty value
@@ -350,8 +298,8 @@ return {
     
     -- Direct API exports for convenience
     getItems = function(character, options) return instance:getItems(character, options) end,
-    buildItemsList = function(character, options) return instance:buildItemsList(character, options) end,
-    formatItemEntry = function(itemData, isLast, setXPosition) return instance:formatItemEntry(itemData, isLast, setXPosition) end,
+    getFormattedWornItems = function(character, options) return instance:getFormattedWornItems(character, options) end,
+    getWornItemsForTooltip = function(character, clothingPenalty) return instance:getWornItemsForTooltip(character, clothingPenalty) end,
     getColorForPenalty = function(penaltyPercent) return instance:getColorForPenalty(penaltyPercent) end,
     hasVisionAffectingItems = function(character) return instance:hasVisionAffectingItems(character) end
 }
