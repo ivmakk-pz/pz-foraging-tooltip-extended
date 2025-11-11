@@ -125,8 +125,8 @@ function FTE_Utils.initializeTooltipLayout()
     -- Calculate content width (base width scaled by font height)
     layout.contentWidth = FTE_Utils.TOOLTIP_BASE_CONTENT_WIDTH * layout.widthScale
     
-    -- Calculate max value width ("+100%" is the longest possible value)
-    layout.maxValueWidth = getTextManager():MeasureStringX(layout.currentFont, "+100%")
+    -- Calculate max value width ("+999%" is the longest possible value)
+    layout.maxValueWidth = getTextManager():MeasureStringX(layout.currentFont, "+999%")
     
     -- Calculate value X position
     local valueSpaceNeeded = layout.maxValueWidth + (10 * layout.widthScale)
@@ -344,21 +344,20 @@ end
 ---@param isAtMaxRadius boolean
 ---@return string tooltipText
 function FTE_Utils.getToolTipTextRadius(text, value, isAtMinRadius, isAtMaxRadius)
-    local color
-    local extraText = ""
+    local color = FTE_Utils.Colors.white -- White for normal radius values
+    local labelSuffix = ""
     
     if isAtMinRadius then
-        color = FTE_Utils.Colors.bad -- Red when at minimum radius
-        extraText = color .. " <SPACE> (min)" .. FTE_Utils.Colors.white
+        color = FTE_Utils.Colors.bad -- Red value when at minimum
+        labelSuffix = " <SPACE> " .. FTE_Utils.Colors.bad .. "(min)" .. FTE_Utils.Colors.white
     elseif isAtMaxRadius then
-        color = FTE_Utils.Colors.good -- Green when at maximum radius
-        extraText = color .. " <SPACE> (max)" .. FTE_Utils.Colors.white
-    else
-        color = FTE_Utils.Colors.good -- Green for positive radius
+        color = FTE_Utils.Colors.good -- Green value when at maximum
+        labelSuffix = " <SPACE> " .. FTE_Utils.Colors.good .. "(max)" .. FTE_Utils.Colors.white
     end
     
-    return " " .. FTE_Utils.Colors.white .. text .. ": <SPACE> " .. 
-           color .. FTE_Utils.formatNumber(value) .. extraText .. " <LINE> "
+    local xPosition = FTE_Utils.tooltipLayout.valueXPosition
+    return " " .. FTE_Utils.Colors.white .. text .. labelSuffix .. " <SETX:" .. xPosition .. "> " .. 
+           color .. FTE_Utils.formatNumber(value) .. " <LINE> "
 end
 
 ---Generate tooltip text for sub-values with prefixes

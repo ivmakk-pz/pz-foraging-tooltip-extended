@@ -97,7 +97,7 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
 	
 	-- Collect all base modifiers for display (excluding clothing - it will be replaced by individual items)
 	local modifierItems = {
-		{text = getText("IGUI_FTE_SearchMode_Vision_Effect_Base_Skill_Traits"), value = baseRadius, showAlways = true},
+		{text = getText("IGUI_FTE_SearchMode_Vision_Effect_Base_Skill_Traits"), value = baseRadius, showAlways = true, forceWhite = true},
 		{text = getText("IGUI_SearchMode_Vision_Effect_Weather"), value = weatherPenalty},
 		{text = getText("IGUI_SearchMode_Vision_Effect_Darkness"), value = darknessMultiplier},
 		{text = modifiers.aimBonus >= modifiers.sneakBonus and getText("IGUI_SearchMode_Vision_Effect_Aiming") or getText("IGUI_SearchMode_Vision_Effect_Crouching"), value = visionBonus},
@@ -129,9 +129,16 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
 		local item = displayItems[i]
 		local isLast = (i == #displayItems)
 		
+		-- Handle forceWhite flag for values that should always be white
+		local valueToDisplay = item.value
+		if item.forceWhite then
+			-- Pre-format the value as white instead of using auto-coloring
+			valueToDisplay = Colors.white .. FTE_Utils.formatNumber(item.value)
+		end
+		
 		table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage(
 			item.text,
-			item.value,
+			valueToDisplay,
 			isLast,
 			valueXPosition
 		))
@@ -151,24 +158,26 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
     if hasFoodDetection then
         local foodDetectionValue = hungerBonus - 1.0
         local formattedFoodBonus = Colors.good .. FTE_Utils.formatPercentShort(foodDetectionValue) .. "%"
-        table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage(
-            getText("IGUI_FTE_Food_Detection_Header") .. " (" .. getText("IGUI_StatsAndBody_Hunger") .. ")",
-            formattedFoodBonus,
-            false,  -- not last (more items follow)
-            valueXPosition
-        ))
+        table.insert(parts, Colors.white)
+        table.insert(parts, getText("IGUI_FTE_Food_Detection_Header") .. " (" .. getText("IGUI_StatsAndBody_Hunger") .. ")")
+        table.insert(parts, " <SETX:")
+        table.insert(parts, tostring(valueXPosition))
+        table.insert(parts, "> ")
+        table.insert(parts, formattedFoodBonus)
+        table.insert(parts, " <LINE> ")
     end
     
     -- Format total bonus with proper color and sign (1 decimal place)
     local bonusColor = FTE_Utils.getRGBForTooltip(totalBonus > 0, totalBonus == 0)
     local formattedTotalBonus = bonusColor .. string.format("%+.1f", totalBonus)
     
-    table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage(
-        getText("IGUI_SearchMode_Vision_Effect_Bonus_Radius"),
-        formattedTotalBonus,
-        false,  -- not last (more items follow)
-        valueXPosition
-    ))
+    table.insert(parts, Colors.white)
+    table.insert(parts, getText("IGUI_SearchMode_Vision_Effect_Bonus_Radius"))
+    table.insert(parts, " <SETX:")
+    table.insert(parts, tostring(valueXPosition))
+    table.insert(parts, "> ")
+    table.insert(parts, formattedTotalBonus)
+    table.insert(parts, " <LINE> ")
 	
 	-- Collect character effect items for sorting
 	local characterItems = {};
@@ -191,7 +200,7 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
 	-- Sort character items (non-zero first, then zero)
 	FTE_Utils.sortTooltipItems(characterItems)
 
-    -- Filter items that should be displayed and add them to text with tree structure
+    -- Filter items that should be displayed and add them to text
 	local displayBonusItems = {}
 	for i = 1, #characterItems do
 		local item = characterItems[i]
@@ -200,22 +209,22 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
 		end
 	end
 	
-	-- Add filtered items with proper isLast detection
+	-- Add filtered items without tree connectors
 	for i = 1, #displayBonusItems do
 		local item = displayBonusItems[i]
-		local isLast = (i == #displayBonusItems)  -- Now correctly detects last displayed item
 		
 		-- Format percentage value with proper color (using short format)
 		local valueColor = item.isBonus and FTE_Utils.getRGBForTooltip(item.value > 0, item.value == 0) 
 		                                  or FTE_Utils.getRGBForTooltip(item.value < 0, item.value == 0)
 		local formattedValue = valueColor .. FTE_Utils.formatPercentShort(item.value) .. "%"
 		
-		table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage(
-			item.text,
-			formattedValue,
-			isLast,
-			valueXPosition
-		))
+		table.insert(parts, Colors.white)
+		table.insert(parts, item.text)
+		table.insert(parts, " <SETX:")
+		table.insert(parts, tostring(valueXPosition))
+		table.insert(parts, "> ")
+		table.insert(parts, formattedValue)
+		table.insert(parts, " <LINE> ")
 	end
 
 	return table.concat(parts);
