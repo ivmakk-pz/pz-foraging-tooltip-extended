@@ -17,17 +17,16 @@ local PERCENTAGE_MULTIPLIER = 100
 local DEBUG_MODE = false
 
 -- Tree connector texture size definitions (available texture sizes in pixels)
-local TREE_CONNECTOR_SIZES = {16, 19, 26}  -- Available texture sizes
+local TREE_CONNECTOR_SIZES = {16, 19, 26, 33, 38}  -- Available texture sizes
 
 -- Font size to texture size mapping (with fallback reuse for larger fonts)
 -- Font sizes: ~16px (Small), ~19px (Medium), ~26px (Large), ~33px (Massive), ~38px (Huge)
--- Texture reuse: 16px texture for 33px fonts (2x upscale), 19px texture for 38px fonts (2x upscale)
 local FONT_TO_TEXTURE_MAP = {
     [16] = 16,  -- Small font -> 16px texture (native)
     [19] = 19,  -- Medium font -> 19px texture (native)
     [26] = 26,  -- Large font -> 26px texture (native)
-    [33] = 16,  -- Massive font -> 16px texture (reused with 2x upscale)
-    [38] = 19   -- Huge font -> 19px texture (reused with 2x upscale)
+    [33] = 33,  -- Massive font -> 33px texture (native)
+    [38] = 38   -- Huge font -> 38px texture (native)
 }
 
 -- Image padding constant (matches ISRichTextPanel's IMAGE_PAD value)
