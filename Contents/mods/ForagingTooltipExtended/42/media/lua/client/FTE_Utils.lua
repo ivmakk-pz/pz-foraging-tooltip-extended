@@ -23,133 +23,121 @@ FTE_Utils.TREE_CONNECTOR_LAST = "media/ui/TooltipStructureItems/last_connector.p
 -- Image padding constant (matches ISRichTextPanel's IMAGE_PAD value)
 FTE_Utils.IMAGE_PAD = 5  -- Padding on each side of images in ISRichTextPanel
 
+-- Tooltip base content width (matches ISToolTip.layoutContents base width)
+-- This is the base width before font scaling is applied (from vanilla: 180 * widthScale)
+FTE_Utils.TOOLTIP_BASE_CONTENT_WIDTH = 185
+
 -- Percentage-based alignment for tooltip values (responsive to font size changes)
 -- This percentage is applied to the available content width (after accounting for value space)
 -- Value of 0.70 provides good balance between label space and value space
 FTE_Utils.TOOLTIP_VALUE_ALIGN_PERCENTAGE = 0.70  -- 70% of available content width
-
--- Calculate tree connector dimensions based on default tooltip font line height
--- Height matches line height, width is fixed at 8px for thinner connector lines
-local function getTreeConnectorDimensions()
-    local defaultFont = UIFont.NewSmall
-    local lineHeight = getTextManager():getFontFromEnum(defaultFont):getLineHeight()
-    local height = math.max(lineHeight, 10)  -- Minimum 10px as per ISRichTextPanel
-    local width = 4  -- Fixed width for thinner tree connector lines
-    return width, height
-end
-
-local treeConnectorWidth, treeConnectorHeight = getTreeConnectorDimensions()
-FTE_Utils.TREE_CONNECTOR_WIDTH = treeConnectorWidth    -- Width of tree connector images
-FTE_Utils.TREE_CONNECTOR_HEIGHT = treeConnectorHeight  -- Height matches font line height
-FTE_Utils.TREE_CONNECTOR_SIZE = treeConnectorHeight    -- Legacy constant (use WIDTH/HEIGHT instead)
-
--- Pre-built tree connector image tags for convenience
-FTE_Utils.TREE_CONNECTOR_MIDDLE_TAG = " <IMAGE:" .. FTE_Utils.TREE_CONNECTOR_MIDDLE .. "," .. treeConnectorWidth .. "," .. treeConnectorHeight .. "> "
-FTE_Utils.TREE_CONNECTOR_LAST_TAG = " <IMAGE:" .. FTE_Utils.TREE_CONNECTOR_LAST .. "," .. treeConnectorWidth .. "," .. treeConnectorHeight .. "> "
 
 -- Get game colors once at module load
 local GHC = getCore():getGoodHighlitedColor()
 local BHC = getCore():getBadHighlitedColor()
 
 -- ===================================================================================================== --
--- FONT CACHING SYSTEM
+-- TOOLTIP LAYOUT METRICS
 -- ===================================================================================================== --
--- Font size cannot be changed mid-game, so we cache all font-related calculations
--- Cache is initialized on first use and remains valid for the entire game session
+-- Tooltip layout metrics are calculated once at initialization and cached for performance
+-- All values are based on current font settings and remain constant during gameplay
 
-local fontCache = {
-    currentFont = nil,           -- Current tooltip font enum
-    widthScale = nil,            -- Width scale factor (fontHeight / 15)
-    contentWidth = nil,          -- Available content width (180 * widthScale)
-    maxValueWidth = nil,         -- Width of "+100%" in current font
-    valueXPosition = nil,        -- Calculated X position for value alignment
-    maxItemNameWidth = nil,      -- Max width for item names (accounting for icons and tree connectors)
-    itemIconHeight = nil,        -- Base icon height (slightly smaller than font height)
+---@class TooltipLayout
+---@field currentFont any Current tooltip font enum
+---@field widthScale number Width scale factor (fontHeight / 15)
+---@field contentWidth number Available content width (180 * widthScale)
+---@field maxValueWidth number Width of "+100%" in current font
+---@field valueXPosition number Calculated X position for value alignment
+---@field maxItemNameWidth number Max width for item names (accounting for icons and tree connectors)
+---@field itemIconHeight number Base icon height (equals font height)
+---@field treeConnectorWidth number Tree connector image width (scaled with font)
+---@field treeConnectorHeight number Tree connector image height (equals font line height)
+
+---Tooltip layout metrics (initialized on module load)
+---@type TooltipLayout
+FTE_Utils.tooltipLayout = {
+    currentFont = UIFont.NewSmall,
+    widthScale = 0,
+    contentWidth = 0,
+    maxValueWidth = 0,
+    valueXPosition = 0,
+    maxItemNameWidth = 0,
+    itemIconHeight = 0,
+    treeConnectorWidth = 0,
+    treeConnectorHeight = 0,
 }
 
----Initialize font cache (called on first use)
-local function initializeFontCache()
+---Calculate tree connector dimensions based on line height and texture aspect ratio
+---@param font any UIFont enum
+---@return number width Calculated width respecting aspect ratio
+---@return number height Calculated height matching line height
+local function calculateTreeConnectorDimensions(font)
+    -- Calculate line height (matches ISRichTextPanel behavior)
+    local lineHeight = getTextManager():getFontFromEnum(font):getLineHeight()
+    -- Apply same minimum as vanilla ISRichTextPanel
+    if lineHeight < 10 then
+        lineHeight = 10
+    end
+    
+    -- Load tree connector texture to get actual dimensions and aspect ratio
+    local treeTexture = getTexture(FTE_Utils.TREE_CONNECTOR_MIDDLE)
+    if treeTexture then
+        local originalWidth = treeTexture:getWidth()
+        local originalHeight = treeTexture:getHeight()
+        
+        if originalWidth > 0 and originalHeight > 0 then
+            -- Calculate aspect ratio and scale width to match line height
+            local aspectRatio = originalWidth / originalHeight
+            local height = math.ceil(lineHeight)
+            local width = math.ceil(height * aspectRatio)
+            return width, height
+        end
+    end
+    
+    -- Fallback if texture not found or invalid
+    return 4, math.ceil(lineHeight)  -- Fallback fixed width
+end
+
+---Initialize tooltip layout metrics (call once during module setup)
+function FTE_Utils.initializeTooltipLayout()
+    local layout = FTE_Utils.tooltipLayout
+    
     -- Get current tooltip font
-    fontCache.currentFont = ISToolTip.GetFont and ISToolTip.GetFont() or UIFont.NewSmall
+    local currentFont = ISToolTip.GetFont and ISToolTip.GetFont() or UIFont.NewSmall
+    
+    -- Only recalculate if font changed (cache optimization)
+    if layout.currentFont == currentFont and layout.contentWidth > 0 then
+        return  -- Already initialized with current font, no recalculation needed
+    end
+    
+    layout.currentFont = currentFont
     
     -- Calculate width scale and font height
-    local fontHeight = getTextManager():getFontHeight(fontCache.currentFont)
-    fontCache.widthScale = fontHeight / 15  -- Same scaling factor used in ISToolTip.layoutContents
+    local fontHeight = getTextManager():getFontHeight(layout.currentFont)
+    layout.widthScale = fontHeight / 15  -- Same scaling factor used in ISToolTip.layoutContents
+    
+    -- Calculate tree connector dimensions based on line height and texture aspect ratio
+    layout.treeConnectorWidth, layout.treeConnectorHeight = calculateTreeConnectorDimensions(layout.currentFont)
     
     -- Calculate item icon height (equals font height for maximum size within boundaries)
-    -- Icons will be scaled to fit this height, with width clamped to not exceed this value
-    fontCache.itemIconHeight = fontHeight
+    layout.itemIconHeight = fontHeight
     
-    -- Calculate content width
-    fontCache.contentWidth = 180 * fontCache.widthScale
+    -- Calculate content width (base width scaled by font height)
+    layout.contentWidth = FTE_Utils.TOOLTIP_BASE_CONTENT_WIDTH * layout.widthScale
     
     -- Calculate max value width ("+100%" is the longest possible value)
-    fontCache.maxValueWidth = getTextManager():MeasureStringX(fontCache.currentFont, "+100%")
+    layout.maxValueWidth = getTextManager():MeasureStringX(layout.currentFont, "+100%")
     
     -- Calculate value X position
-    local valueSpaceNeeded = fontCache.maxValueWidth + (10 * fontCache.widthScale)
-    fontCache.valueXPosition = math.floor(fontCache.contentWidth - valueSpaceNeeded)
+    local valueSpaceNeeded = layout.maxValueWidth + (10 * layout.widthScale)
+    layout.valueXPosition = math.floor(layout.contentWidth - valueSpaceNeeded)
     
     -- Calculate max item name width for worn items
     -- Tree connector: base width (scaled) + padding (FIXED pixels, not scaled)
-    local treeConnectorTotal = (FTE_Utils.TREE_CONNECTOR_WIDTH * fontCache.widthScale) + (FTE_Utils.IMAGE_PAD * 2)
+    local treeConnectorTotal = (layout.treeConnectorWidth * layout.widthScale) + (FTE_Utils.IMAGE_PAD * 2)
     -- Item icon: fontHeight (already in pixels) + padding (FIXED pixels, not scaled)
-    local itemIconTotal = fontCache.itemIconHeight + (FTE_Utils.IMAGE_PAD * 2)
-    fontCache.maxItemNameWidth = math.floor(fontCache.contentWidth - treeConnectorTotal - itemIconTotal - valueSpaceNeeded)
-end
-
----Get cached current tooltip font
----@return any currentFont UIFont enum
-function FTE_Utils.getCachedTooltipFont()
-    if not fontCache.currentFont then
-        initializeFontCache()
-    end
-    return fontCache.currentFont
-end
-
----Get cached width scale factor
----@return number widthScale The width scale factor
-function FTE_Utils.getCachedWidthScale()
-    if not fontCache.widthScale then
-        initializeFontCache()
-    end
-    return fontCache.widthScale
-end
-
----Get cached content width
----@return number contentWidth Available content width in pixels
-function FTE_Utils.getCachedContentWidth()
-    if not fontCache.contentWidth then
-        initializeFontCache()
-    end
-    return fontCache.contentWidth
-end
-
----Get cached value X position
----@return number xPosition Calculated X position for value alignment
-function FTE_Utils.getCachedValueXPosition()
-    if not fontCache.valueXPosition then
-        initializeFontCache()
-    end
-    return fontCache.valueXPosition
-end
-
----Get cached max item name width
----@return number maxWidth Maximum width for item names in pixels
-function FTE_Utils.getCachedMaxItemNameWidth()
-    if not fontCache.maxItemNameWidth then
-        initializeFontCache()
-    end
-    return fontCache.maxItemNameWidth
-end
-
----Get cached item icon height
----@return number iconHeight Item icon height in pixels (scaled with font size)
-function FTE_Utils.getCachedItemIconHeight()
-    if not fontCache.itemIconHeight then
-        initializeFontCache()
-    end
-    return fontCache.itemIconHeight
+    local itemIconTotal = layout.itemIconHeight + (FTE_Utils.IMAGE_PAD * 2)
+    layout.maxItemNameWidth = math.floor(layout.contentWidth - treeConnectorTotal - itemIconTotal - valueSpaceNeeded)
 end
 
 ---Get scaled icon dimensions respecting aspect ratio
@@ -159,33 +147,37 @@ end
 ---@return number width Scaled width maintaining aspect ratio
 ---@return number height Scaled height maintaining aspect ratio
 function FTE_Utils.getScaledIconDimensions(texture)
-    local maxSize = FTE_Utils.getCachedItemIconHeight()  -- Maximum size for both dimensions
+    local maxSize = FTE_Utils.tooltipLayout.itemIconHeight
     
     if not texture then
-        -- Fallback: square icon at maximum size
         return maxSize, maxSize
     end
     
-    -- Get original texture dimensions
     local originalWidth = texture:getWidth()
     local originalHeight = texture:getHeight()
     
     if not originalWidth or not originalHeight or originalWidth == 0 or originalHeight == 0 then
-        -- Fallback: square icon at maximum size
         return maxSize, maxSize
     end
     
     -- Calculate scale factor to fit within square box while maintaining aspect ratio
-    -- Scale based on whichever dimension is larger relative to maxSize
     local scaleWidth = maxSize / originalWidth
     local scaleHeight = maxSize / originalHeight
-    local scale = math.min(scaleWidth, scaleHeight)  -- Use smaller scale to ensure both dimensions fit
+    local scale = math.min(scaleWidth, scaleHeight)
     
-    -- Apply scale to both dimensions
     local scaledWidth = math.floor(originalWidth * scale)
     local scaledHeight = math.floor(originalHeight * scale)
     
     return scaledWidth, scaledHeight
+end
+
+---Get tree connector image tag for tooltips
+---@param isLast boolean Whether this is the last item (uses last_connector instead of middle_connector)
+---@return string imageTag The complete IMAGE tag with current font-scaled dimensions
+function FTE_Utils.getTreeConnectorImageTag(isLast)
+    local layout = FTE_Utils.tooltipLayout
+    local imagePath = isLast and FTE_Utils.TREE_CONNECTOR_LAST or FTE_Utils.TREE_CONNECTOR_MIDDLE
+    return " <IMAGE:" .. imagePath .. "," .. layout.treeConnectorWidth .. "," .. layout.treeConnectorHeight .. "> "
 end
 
 -- ===================================================================================================== --
@@ -392,7 +384,7 @@ end
 ---@param setXPosition number|nil Optional X position for value alignment (uses <SETX> for column alignment)
 ---@return string tooltipText
 function FTE_Utils.getToolTipTextWithTreeImage(text, value, isLast, setXPosition)
-    local imageTag = isLast and FTE_Utils.TREE_CONNECTOR_LAST_TAG or FTE_Utils.TREE_CONNECTOR_MIDDLE_TAG
+    local imageTag = FTE_Utils.getTreeConnectorImageTag(isLast)
     
     -- Handle both numeric values and pre-formatted strings
     local formattedValue = ""
@@ -420,7 +412,7 @@ end
 ---@return string tooltipText
 function FTE_Utils.getToolTipHeaderWithAlignment(text, value)
     local color = FTE_Utils.getRGBForValue(value)
-    local xPosition = FTE_Utils.getCachedValueXPosition()
+    local xPosition = FTE_Utils.tooltipLayout.valueXPosition
     return " " .. FTE_Utils.Colors.white .. text .. " <SETX:" .. xPosition .. "> " ..
            color .. FTE_Utils.formatNumber(value) .. " <LINE> "
 end

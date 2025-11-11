@@ -45,6 +45,9 @@ end
 ---@param zoneDisplay ISZoneDisplay
 ---@return string
 local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
+    -- Reinitialize tooltip layout to detect font changes (lightweight, only when tooltip shows)
+    FTE_Utils.initializeTooltipLayout()
+    
     -- Configure tooltip panel to prevent soft wrapping (only once)
     if zoneDisplay.tipPanel and modifiedTipPanel == nil then
         -- Store reference to panel and original value for cleanup
@@ -89,8 +92,8 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
 	-- Add main radius text
 	table.insert(parts, FTE_Utils.getToolTipTextRadius(getText("IGUI_SearchMode_Vision_Effect_Radius"), visionRadius, isAtMinRadius, isAtMaxRadius));
 	
-	-- Get cached X position for value alignment (responsive to font size)
-	local valueXPosition = FTE_Utils.getCachedValueXPosition()
+	-- Get value X position for alignment (responsive to font size)
+	local valueXPosition = FTE_Utils.tooltipLayout.valueXPosition
 	
 	-- Collect all base modifiers for display (excluding clothing - it will be replaced by individual items)
 	local modifierItems = {

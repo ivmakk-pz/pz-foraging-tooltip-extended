@@ -162,10 +162,7 @@ end
 ---@return table displayItems Array of formatted display items with text and value
 local function formatWornItemsForDisplay(itemsData)
     local displayItems = {}
-    
-    -- Use cached values for performance (calculated once, used many times)
-    local maxItemNameWidth = FTE_Utils.getCachedMaxItemNameWidth()
-    local currentFont = FTE_Utils.getCachedTooltipFont()
+    local layout = FTE_Utils.tooltipLayout
     
     for i = 1, #itemsData do
         local itemData = itemsData[i]
@@ -178,7 +175,7 @@ local function formatWornItemsForDisplay(itemsData)
         end
         
         -- Truncate item name if too long to prevent text overlap (responsive to font size)
-        local itemName = FTE_Utils.truncateText(itemData.displayName, maxItemNameWidth, currentFont)
+        local itemName = FTE_Utils.truncateText(itemData.displayName, layout.maxItemNameWidth, layout.currentFont)
         label = label .. itemName
         
         table.insert(displayItems, {
