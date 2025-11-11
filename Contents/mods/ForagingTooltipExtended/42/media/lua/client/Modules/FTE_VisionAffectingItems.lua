@@ -25,12 +25,6 @@ local instance = FTE_VisionAffectingItems:new()
 -- Items must have a penalty to be shown (no zero-effect items by default)
 local MIN_PENALTY_THRESHOLD = 0.01  -- 0.01% minimum penalty to display
 
--- Maximum width for item names in pixels (prevents long names from breaking layout)
-local MAX_ITEM_NAME_WIDTH = 120
-
--- Item icon size for tooltip display (standard inventory icon size)
-local ITEM_ICON_SIZE = 16
-
 -- ===================================================================================================== --
 -- DATA COLLECTION FUNCTIONS
 -- ===================================================================================================== --
@@ -169,17 +163,22 @@ end
 local function formatWornItemsForDisplay(itemsData)
     local displayItems = {}
     
+    -- Use cached values for performance (calculated once, used many times)
+    local maxItemNameWidth = FTE_Utils.getCachedMaxItemNameWidth()
+    local currentFont = FTE_Utils.getCachedTooltipFont()
+    
     for i = 1, #itemsData do
         local itemData = itemsData[i]
         
-        -- Build label with icon (fixed size for worn items)
+        -- Build label with icon (scaled to font size, respecting aspect ratio)
         local label = ""
         if itemData.iconName and itemData.iconTexture then
-            label = " <IMAGE:" .. itemData.iconName .. "," .. ITEM_ICON_SIZE .. "," .. ITEM_ICON_SIZE .. "> "
+            local iconWidth, iconHeight = FTE_Utils.getScaledIconDimensions(itemData.iconTexture)
+            label = " <IMAGE:" .. itemData.iconName .. "," .. iconWidth .. "," .. iconHeight .. "> "
         end
         
-        -- Truncate item name if too long to prevent text overlap
-        local itemName = FTE_Utils.truncateText(itemData.displayName, MAX_ITEM_NAME_WIDTH)
+        -- Truncate item name if too long to prevent text overlap (responsive to font size)
+        local itemName = FTE_Utils.truncateText(itemData.displayName, maxItemNameWidth, currentFont)
         label = label .. itemName
         
         table.insert(displayItems, {

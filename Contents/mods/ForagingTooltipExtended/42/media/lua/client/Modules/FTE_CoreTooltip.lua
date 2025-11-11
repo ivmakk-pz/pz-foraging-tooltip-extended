@@ -17,6 +17,10 @@ local FTE_CoreTooltip = FTE_ModuleBase:derive("FTE_CoreTooltip")
 local instance = FTE_CoreTooltip:new()
 ---@cast instance FTE_CoreTooltip
 
+-- Store reference to modified panel and original value for cleanup
+local modifiedTipPanel = nil
+local originalMaxLineWidth = nil
+
 
 
 -- ===================================================================================================== --
@@ -41,6 +45,16 @@ end
 ---@param zoneDisplay ISZoneDisplay
 ---@return string
 local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
+    -- Configure tooltip panel to prevent soft wrapping (only once)
+    if zoneDisplay.tipPanel and modifiedTipPanel == nil then
+        -- Store reference to panel and original value for cleanup
+        modifiedTipPanel = zoneDisplay.tipPanel
+        originalMaxLineWidth = zoneDisplay.tipPanel.maxLineWidth
+        
+        -- Set large value to prevent soft wrapping
+        zoneDisplay.tipPanel.maxLineWidth = 10000
+    end
+    
     -- Use table-based concatenation for better performance
     local parts = {}
 
@@ -75,8 +89,8 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
 	-- Add main radius text
 	table.insert(parts, FTE_Utils.getToolTipTextRadius(getText("IGUI_SearchMode_Vision_Effect_Radius"), visionRadius, isAtMinRadius, isAtMaxRadius));
 	
-	-- Use global fixed alignment position for all values
-	local valueXPosition = FTE_Utils.TOOLTIP_VALUE_X_POSITION
+	-- Get cached X position for value alignment (responsive to font size)
+	local valueXPosition = FTE_Utils.getCachedValueXPosition()
 	
 	-- Collect all base modifiers for display (excluding clothing - it will be replaced by individual items)
 	local modifierItems = {
@@ -215,6 +229,20 @@ function FTE_CoreTooltip:setupModule()
     self:overrideFunction(ISZoneDisplay, "getVisionTooltipText", ISZoneDisplay_getVisionTooltipText)
     
     FTE_Utils.logInfo("FTE_CoreTooltip: Core tooltip enhancement module setup complete")
+end
+
+---Override destroy to restore property modifications before base cleanup
+function FTE_CoreTooltip:destroy()
+    -- Restore maxLineWidth property if we modified it
+    if modifiedTipPanel ~= nil and originalMaxLineWidth ~= nil then
+        modifiedTipPanel.maxLineWidth = originalMaxLineWidth
+        FTE_Utils.logInfo("FTE_CoreTooltip: Restored tipPanel.maxLineWidth to " .. tostring(originalMaxLineWidth))
+        modifiedTipPanel = nil
+        originalMaxLineWidth = nil
+    end
+    
+    -- Call base destroy to restore function overrides and cleanup events
+    FTE_ModuleBase.destroy(self)
 end
 
 -- ===================================================================================================== --

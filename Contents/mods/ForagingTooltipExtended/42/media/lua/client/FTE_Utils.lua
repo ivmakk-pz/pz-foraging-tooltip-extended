@@ -23,10 +23,10 @@ FTE_Utils.TREE_CONNECTOR_LAST = "media/ui/TooltipStructureItems/last_connector.p
 -- Image padding constant (matches ISRichTextPanel's IMAGE_PAD value)
 FTE_Utils.IMAGE_PAD = 5  -- Padding on each side of images in ISRichTextPanel
 
--- Global alignment position for tooltip values (fixed right-aligned position)
--- Calculated to accommodate max possible value width like "+100%" or "10.50"
--- Lower value = values start earlier (more space for the value itself)
-FTE_Utils.TOOLTIP_VALUE_X_POSITION = 180  -- Fixed X position for all tooltip values
+-- Percentage-based alignment for tooltip values (responsive to font size changes)
+-- This percentage is applied to the available content width (after accounting for value space)
+-- Value of 0.70 provides good balance between label space and value space
+FTE_Utils.TOOLTIP_VALUE_ALIGN_PERCENTAGE = 0.70  -- 70% of available content width
 
 -- Calculate tree connector dimensions based on default tooltip font line height
 -- Height matches line height, width is fixed at 8px for thinner connector lines
@@ -50,6 +50,143 @@ FTE_Utils.TREE_CONNECTOR_LAST_TAG = " <IMAGE:" .. FTE_Utils.TREE_CONNECTOR_LAST 
 -- Get game colors once at module load
 local GHC = getCore():getGoodHighlitedColor()
 local BHC = getCore():getBadHighlitedColor()
+
+-- ===================================================================================================== --
+-- FONT CACHING SYSTEM
+-- ===================================================================================================== --
+-- Font size cannot be changed mid-game, so we cache all font-related calculations
+-- Cache is initialized on first use and remains valid for the entire game session
+
+local fontCache = {
+    currentFont = nil,           -- Current tooltip font enum
+    widthScale = nil,            -- Width scale factor (fontHeight / 15)
+    contentWidth = nil,          -- Available content width (180 * widthScale)
+    maxValueWidth = nil,         -- Width of "+100%" in current font
+    valueXPosition = nil,        -- Calculated X position for value alignment
+    maxItemNameWidth = nil,      -- Max width for item names (accounting for icons and tree connectors)
+    itemIconHeight = nil,        -- Base icon height (slightly smaller than font height)
+}
+
+---Initialize font cache (called on first use)
+local function initializeFontCache()
+    -- Get current tooltip font
+    fontCache.currentFont = ISToolTip.GetFont and ISToolTip.GetFont() or UIFont.NewSmall
+    
+    -- Calculate width scale and font height
+    local fontHeight = getTextManager():getFontHeight(fontCache.currentFont)
+    fontCache.widthScale = fontHeight / 15  -- Same scaling factor used in ISToolTip.layoutContents
+    
+    -- Calculate item icon height (equals font height for maximum size within boundaries)
+    -- Icons will be scaled to fit this height, with width clamped to not exceed this value
+    fontCache.itemIconHeight = fontHeight
+    
+    -- Calculate content width
+    fontCache.contentWidth = 180 * fontCache.widthScale
+    
+    -- Calculate max value width ("+100%" is the longest possible value)
+    fontCache.maxValueWidth = getTextManager():MeasureStringX(fontCache.currentFont, "+100%")
+    
+    -- Calculate value X position
+    local valueSpaceNeeded = fontCache.maxValueWidth + (10 * fontCache.widthScale)
+    fontCache.valueXPosition = math.floor(fontCache.contentWidth - valueSpaceNeeded)
+    
+    -- Calculate max item name width for worn items
+    -- Tree connector: base width (scaled) + padding (FIXED pixels, not scaled)
+    local treeConnectorTotal = (FTE_Utils.TREE_CONNECTOR_WIDTH * fontCache.widthScale) + (FTE_Utils.IMAGE_PAD * 2)
+    -- Item icon: fontHeight (already in pixels) + padding (FIXED pixels, not scaled)
+    local itemIconTotal = fontCache.itemIconHeight + (FTE_Utils.IMAGE_PAD * 2)
+    fontCache.maxItemNameWidth = math.floor(fontCache.contentWidth - treeConnectorTotal - itemIconTotal - valueSpaceNeeded)
+end
+
+---Get cached current tooltip font
+---@return any currentFont UIFont enum
+function FTE_Utils.getCachedTooltipFont()
+    if not fontCache.currentFont then
+        initializeFontCache()
+    end
+    return fontCache.currentFont
+end
+
+---Get cached width scale factor
+---@return number widthScale The width scale factor
+function FTE_Utils.getCachedWidthScale()
+    if not fontCache.widthScale then
+        initializeFontCache()
+    end
+    return fontCache.widthScale
+end
+
+---Get cached content width
+---@return number contentWidth Available content width in pixels
+function FTE_Utils.getCachedContentWidth()
+    if not fontCache.contentWidth then
+        initializeFontCache()
+    end
+    return fontCache.contentWidth
+end
+
+---Get cached value X position
+---@return number xPosition Calculated X position for value alignment
+function FTE_Utils.getCachedValueXPosition()
+    if not fontCache.valueXPosition then
+        initializeFontCache()
+    end
+    return fontCache.valueXPosition
+end
+
+---Get cached max item name width
+---@return number maxWidth Maximum width for item names in pixels
+function FTE_Utils.getCachedMaxItemNameWidth()
+    if not fontCache.maxItemNameWidth then
+        initializeFontCache()
+    end
+    return fontCache.maxItemNameWidth
+end
+
+---Get cached item icon height
+---@return number iconHeight Item icon height in pixels (scaled with font size)
+function FTE_Utils.getCachedItemIconHeight()
+    if not fontCache.itemIconHeight then
+        initializeFontCache()
+    end
+    return fontCache.itemIconHeight
+end
+
+---Get scaled icon dimensions respecting aspect ratio
+---Icons are scaled to fit within a square box (fontHeight x fontHeight)
+---Aspect ratio is always preserved - icons are scaled down to fit if needed
+---@param texture any Texture object from item:getIcon()
+---@return number width Scaled width maintaining aspect ratio
+---@return number height Scaled height maintaining aspect ratio
+function FTE_Utils.getScaledIconDimensions(texture)
+    local maxSize = FTE_Utils.getCachedItemIconHeight()  -- Maximum size for both dimensions
+    
+    if not texture then
+        -- Fallback: square icon at maximum size
+        return maxSize, maxSize
+    end
+    
+    -- Get original texture dimensions
+    local originalWidth = texture:getWidth()
+    local originalHeight = texture:getHeight()
+    
+    if not originalWidth or not originalHeight or originalWidth == 0 or originalHeight == 0 then
+        -- Fallback: square icon at maximum size
+        return maxSize, maxSize
+    end
+    
+    -- Calculate scale factor to fit within square box while maintaining aspect ratio
+    -- Scale based on whichever dimension is larger relative to maxSize
+    local scaleWidth = maxSize / originalWidth
+    local scaleHeight = maxSize / originalHeight
+    local scale = math.min(scaleWidth, scaleHeight)  -- Use smaller scale to ensure both dimensions fit
+    
+    -- Apply scale to both dimensions
+    local scaledWidth = math.floor(originalWidth * scale)
+    local scaledHeight = math.floor(originalHeight * scale)
+    
+    return scaledWidth, scaledHeight
+end
 
 -- ===================================================================================================== --
 -- LOGGING FUNCTIONS
@@ -283,7 +420,8 @@ end
 ---@return string tooltipText
 function FTE_Utils.getToolTipHeaderWithAlignment(text, value)
     local color = FTE_Utils.getRGBForValue(value)
-    return " " .. FTE_Utils.Colors.white .. text .. " <SETX:" .. FTE_Utils.TOOLTIP_VALUE_X_POSITION .. "> " ..
+    local xPosition = FTE_Utils.getCachedValueXPosition()
+    return " " .. FTE_Utils.Colors.white .. text .. " <SETX:" .. xPosition .. "> " ..
            color .. FTE_Utils.formatNumber(value) .. " <LINE> "
 end
 
