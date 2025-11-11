@@ -16,9 +16,19 @@ local PERCENTAGE_MULTIPLIER = 100
 -- Debug mode flag
 local DEBUG_MODE = false
 
--- Tree connector image paths and size
-FTE_Utils.TREE_CONNECTOR_MIDDLE = "media/ui/TooltipStructureItems/middle_connector.png"
-FTE_Utils.TREE_CONNECTOR_LAST = "media/ui/TooltipStructureItems/last_connector.png"
+-- Tree connector texture size definitions (available texture sizes in pixels)
+local TREE_CONNECTOR_SIZES = {16, 19, 26}  -- Available texture sizes
+
+-- Font size to texture size mapping (with fallback reuse for larger fonts)
+-- Font sizes: ~16px (Small), ~19px (Medium), ~26px (Large), ~33px (Massive), ~38px (Huge)
+-- Texture reuse: 16px texture for 33px fonts (2x upscale), 19px texture for 38px fonts (2x upscale)
+local FONT_TO_TEXTURE_MAP = {
+    [16] = 16,  -- Small font -> 16px texture (native)
+    [19] = 19,  -- Medium font -> 19px texture (native)
+    [26] = 26,  -- Large font -> 26px texture (native)
+    [33] = 16,  -- Massive font -> 16px texture (reused with 2x upscale)
+    [38] = 19   -- Huge font -> 19px texture (reused with 2x upscale)
+}
 
 -- Image padding constant (matches ISRichTextPanel's IMAGE_PAD value)
 FTE_Utils.IMAGE_PAD = 5  -- Padding on each side of images in ISRichTextPanel
@@ -52,6 +62,8 @@ local BHC = getCore():getBadHighlitedColor()
 ---@field itemIconHeight number Base icon height (equals font height)
 ---@field treeConnectorWidth number Tree connector image width (scaled with font)
 ---@field treeConnectorHeight number Tree connector image height (equals font line height)
+---@field treeConnectorMiddlePath string Path to middle connector texture (font-size-specific)
+---@field treeConnectorLastPath string Path to last connector texture (font-size-specific)
 
 ---Tooltip layout metrics (initialized on module load)
 ---@type TooltipLayout
@@ -65,12 +77,49 @@ FTE_Utils.tooltipLayout = {
     itemIconHeight = 0,
     treeConnectorWidth = 0,
     treeConnectorHeight = 0,
+    treeConnectorMiddlePath = "",
+    treeConnectorLastPath = "",
 }
 
----Calculate tree connector dimensions based on line height and texture aspect ratio
+---Select best tree connector texture size based on font line height
+---@param lineHeight number Current font line height in pixels
+---@return number textureSize Best matching texture size (fallback: 16px for unsupported sizes)
+local function selectBestTextureSize(lineHeight)
+    -- Round line height to nearest integer for mapping
+    local roundedHeight = math.floor(lineHeight + 0.5)
+    
+    -- Check if we have an exact mapping for this font size
+    if FONT_TO_TEXTURE_MAP[roundedHeight] then
+        return FONT_TO_TEXTURE_MAP[roundedHeight]
+    end
+    
+    -- Find closest available texture size (prefer smaller to avoid excessive upscaling)
+    local bestSize = TREE_CONNECTOR_SIZES[1]  -- Default to smallest (16px)
+    local minDiff = math.abs(roundedHeight - bestSize)
+    
+    for i = 1, #TREE_CONNECTOR_SIZES do
+        local size = TREE_CONNECTOR_SIZES[i]
+        local diff = math.abs(roundedHeight - size)
+        if diff < minDiff or (diff == minDiff and size > bestSize) then
+            bestSize = size
+            minDiff = diff
+        end
+    end
+    
+    -- Fallback: if no close match found or unexpected font size, use 16px texture
+    if bestSize == 0 or minDiff > 20 then
+        bestSize = 16
+    end
+    
+    return bestSize
+end
+
+---Calculate tree connector dimensions and paths based on line height and texture aspect ratio
 ---@param font any UIFont enum
 ---@return number width Calculated width respecting aspect ratio
 ---@return number height Calculated height matching line height
+---@return string middlePath Path to middle connector texture
+---@return string lastPath Path to last connector texture
 local function calculateTreeConnectorDimensions(font)
     -- Calculate line height (matches ISRichTextPanel behavior)
     local lineHeight = getTextManager():getFontFromEnum(font):getLineHeight()
@@ -79,8 +128,15 @@ local function calculateTreeConnectorDimensions(font)
         lineHeight = 10
     end
     
+    -- Select best texture size for current font
+    local textureSize = selectBestTextureSize(lineHeight)
+    
+    -- Build texture paths
+    local middlePath = "media/ui/TooltipStructureItems/t_connector_" .. textureSize .. ".png"
+    local lastPath = "media/ui/TooltipStructureItems/l_connector_" .. textureSize .. ".png"
+    
     -- Load tree connector texture to get actual dimensions and aspect ratio
-    local treeTexture = getTexture(FTE_Utils.TREE_CONNECTOR_MIDDLE)
+    local treeTexture = getTexture(middlePath)
     if treeTexture then
         local originalWidth = treeTexture:getWidth()
         local originalHeight = treeTexture:getHeight()
@@ -90,12 +146,12 @@ local function calculateTreeConnectorDimensions(font)
             local aspectRatio = originalWidth / originalHeight
             local height = math.ceil(lineHeight)
             local width = math.ceil(height * aspectRatio)
-            return width, height
+            return width, height, middlePath, lastPath
         end
     end
     
     -- Fallback if texture not found or invalid
-    return 4, math.ceil(lineHeight)  -- Fallback fixed width
+    return 4, math.ceil(lineHeight), middlePath, lastPath
 end
 
 ---Initialize tooltip layout metrics (call once during module setup)
@@ -116,8 +172,9 @@ function FTE_Utils.initializeTooltipLayout()
     local fontHeight = getTextManager():getFontHeight(layout.currentFont)
     layout.widthScale = fontHeight / 15  -- Same scaling factor used in ISToolTip.layoutContents
     
-    -- Calculate tree connector dimensions based on line height and texture aspect ratio
-    layout.treeConnectorWidth, layout.treeConnectorHeight = calculateTreeConnectorDimensions(layout.currentFont)
+    -- Calculate tree connector dimensions and paths based on line height and texture aspect ratio
+    layout.treeConnectorWidth, layout.treeConnectorHeight, layout.treeConnectorMiddlePath, layout.treeConnectorLastPath = 
+        calculateTreeConnectorDimensions(layout.currentFont)
     
     -- Calculate item icon height (equals font height for maximum size within boundaries)
     layout.itemIconHeight = fontHeight
@@ -172,11 +229,11 @@ function FTE_Utils.getScaledIconDimensions(texture)
 end
 
 ---Get tree connector image tag for tooltips
----@param isLast boolean Whether this is the last item (uses last_connector instead of middle_connector)
+---@param isLast boolean Whether this is the last item (uses l_connector instead of t_connector)
 ---@return string imageTag The complete IMAGE tag with current font-scaled dimensions
 function FTE_Utils.getTreeConnectorImageTag(isLast)
     local layout = FTE_Utils.tooltipLayout
-    local imagePath = isLast and FTE_Utils.TREE_CONNECTOR_LAST or FTE_Utils.TREE_CONNECTOR_MIDDLE
+    local imagePath = isLast and layout.treeConnectorLastPath or layout.treeConnectorMiddlePath
     return " <IMAGE:" .. imagePath .. "," .. layout.treeConnectorWidth .. "," .. layout.treeConnectorHeight .. "> "
 end
 
@@ -342,8 +399,11 @@ end
 ---@param value number The radius value
 ---@param isAtMinRadius boolean
 ---@param isAtMaxRadius boolean
+---@param useRightAlign boolean|nil Optional: whether to right-align values (default: true)
 ---@return string tooltipText
-function FTE_Utils.getToolTipTextRadius(text, value, isAtMinRadius, isAtMaxRadius)
+function FTE_Utils.getToolTipTextRadius(text, value, isAtMinRadius, isAtMaxRadius, useRightAlign)
+    if useRightAlign == nil then useRightAlign = true end
+    
     local color = FTE_Utils.Colors.white -- White for normal radius values
     local labelSuffix = ""
     
@@ -355,9 +415,14 @@ function FTE_Utils.getToolTipTextRadius(text, value, isAtMinRadius, isAtMaxRadiu
         labelSuffix = " <SPACE> " .. FTE_Utils.Colors.good .. "(max)" .. FTE_Utils.Colors.white
     end
     
-    local xPosition = FTE_Utils.tooltipLayout.valueXPosition
-    return " " .. FTE_Utils.Colors.white .. text .. labelSuffix .. " <SETX:" .. xPosition .. "> " .. 
-           color .. FTE_Utils.formatNumber(value) .. " <LINE> "
+    if useRightAlign then
+        local xPosition = FTE_Utils.tooltipLayout.valueXPosition
+        return " " .. FTE_Utils.Colors.white .. text .. labelSuffix .. " <SETX:" .. xPosition .. "> " .. 
+               color .. FTE_Utils.formatNumber(value) .. " <LINE> "
+    else
+        return " " .. FTE_Utils.Colors.white .. text .. labelSuffix .. ": <SPACE> " .. 
+               color .. FTE_Utils.formatNumber(value) .. " <LINE> "
+    end
 end
 
 ---Generate tooltip text for sub-values with prefixes
@@ -381,8 +446,11 @@ end
 ---@param value number|string The value to display (number for auto-formatting, or pre-formatted string with color)
 ---@param isLast boolean Whether this is the last item (uses last_connector instead of middle_connector)
 ---@param setXPosition number|nil Optional X position for value alignment (uses <SETX> for column alignment)
+---@param useRightAlign boolean|nil Optional: whether to use right-align when setXPosition is provided (default: true)
 ---@return string tooltipText
-function FTE_Utils.getToolTipTextWithTreeImage(text, value, isLast, setXPosition)
+function FTE_Utils.getToolTipTextWithTreeImage(text, value, isLast, setXPosition, useRightAlign)
+    if useRightAlign == nil then useRightAlign = true end
+    
     local imageTag = FTE_Utils.getTreeConnectorImageTag(isLast)
     
     -- Handle both numeric values and pre-formatted strings
@@ -394,12 +462,12 @@ function FTE_Utils.getToolTipTextWithTreeImage(text, value, isLast, setXPosition
         formattedValue = tostring(value)  -- Already formatted string with color
     end
     
-    if setXPosition then
+    if setXPosition and useRightAlign then
         -- Use SETX for column-aligned values - place SETX before the colon to prevent wrapping
         return " " .. imageTag .. FTE_Utils.Colors.white .. text .. " <SETX:" .. setXPosition .. "> " .. 
                formattedValue .. " <LINE> "
     else
-        -- Default: simple space separator
+        -- Default: simple space separator (left-aligned)
         return " " .. imageTag .. FTE_Utils.Colors.white .. text .. ": <SPACE> " .. 
                formattedValue .. " <LINE> "
     end
@@ -408,12 +476,21 @@ end
 ---Generate tooltip header text with aligned value (for section headers like D, E, F)
 ---@param text string The header text (e.g., "D. Best Vision Bonus")
 ---@param value number The value to display
+---@param useRightAlign boolean|nil Optional: whether to right-align values (default: true)
 ---@return string tooltipText
-function FTE_Utils.getToolTipHeaderWithAlignment(text, value)
+function FTE_Utils.getToolTipHeaderWithAlignment(text, value, useRightAlign)
+    if useRightAlign == nil then useRightAlign = true end
+    
     local color = FTE_Utils.getRGBForValue(value)
-    local xPosition = FTE_Utils.tooltipLayout.valueXPosition
-    return " " .. FTE_Utils.Colors.white .. text .. " <SETX:" .. xPosition .. "> " ..
-           color .. FTE_Utils.formatNumber(value) .. " <LINE> "
+    
+    if useRightAlign then
+        local xPosition = FTE_Utils.tooltipLayout.valueXPosition
+        return " " .. FTE_Utils.Colors.white .. text .. " <SETX:" .. xPosition .. "> " ..
+               color .. FTE_Utils.formatNumber(value) .. " <LINE> "
+    else
+        return " " .. FTE_Utils.Colors.white .. text .. ": <SPACE> " ..
+               color .. FTE_Utils.formatNumber(value) .. " <LINE> "
+    end
 end
 
 ---Calculate maximum label width for a set of labels (for column alignment)

@@ -5,6 +5,7 @@ local FTE_Utils = require("FTE_Utils")
 -- Storage array for all of our options
 local FTE_Config = {
     showPersistentRadius = nil,
+    tooltipValueAlignment = nil,
 }
 
 -- Configuration function to set up mod options
@@ -19,6 +20,14 @@ local function FTE_ModOptionsConfig()
         true, 
         getText("UI_options_FTE_showPersistentRadius_tooltip")
     )
+    
+    -- Add dropdown option for tooltip value alignment
+    FTE_Config.tooltipValueAlignment = options:addComboBox(
+        "tooltipValueAlignment",
+        getText("UI_options_FTE_tooltipValueAlignment")
+    )
+    FTE_Config.tooltipValueAlignment:addItem(getText("UI_options_FTE_tooltipValueAlignment_rightAligned"), true)  -- Default
+    FTE_Config.tooltipValueAlignment:addItem(getText("UI_options_FTE_tooltipValueAlignment_leftAligned"), false)
 end
 
 -- ===================================================================================================== --
@@ -33,6 +42,15 @@ function FTE_ModOptions.shouldShowPersistentRadius()
         return FTE_Config.showPersistentRadius:getValue()
     else
         return true  -- Default enabled when not initialized
+    end
+end
+
+-- Get whether to use right-aligned values in tooltips
+function FTE_ModOptions.isTooltipValueRightAligned()
+    if FTE_Config.tooltipValueAlignment then
+        return FTE_Config.tooltipValueAlignment:getValue() == 1  -- 1 = Right Aligned, 2 = Left Aligned
+    else
+        return true  -- Default to right-aligned when not initialized
     end
 end
 

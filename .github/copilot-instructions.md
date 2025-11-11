@@ -152,8 +152,12 @@ Contents/mods/ForagingTooltipExtended/42/media/
 │           └── UI_EN.txt                     # Mod options translations
 └── ui/
     └── TooltipStructureItems/
-        ├── middle_connector.png              # Tree connector for list items (16x16px)
-        └── last_connector.png                # Tree connector for last item (16x16px)
+        ├── t_connector_16.png                # Middle (tee) connector - 16px (for Small/Massive fonts)
+        ├── t_connector_19.png                # Middle (tee) connector - 19px (for Medium/Huge fonts)
+        ├── t_connector_26.png                # Middle (tee) connector - 26px (for Large font)
+        ├── l_connector_16.png                # Last (L-shape) connector - 16px (for Small/Massive fonts)
+        ├── l_connector_19.png                # Last (L-shape) connector - 19px (for Medium/Huge fonts)
+        └── l_connector_26.png                # Last (L-shape) connector - 26px (for Large font)
 ```
 
 ### UI Assets

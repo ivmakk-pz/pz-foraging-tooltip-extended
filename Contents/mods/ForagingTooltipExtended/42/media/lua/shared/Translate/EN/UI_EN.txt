@@ -2,4 +2,7 @@ UI_FTE_EN = {
     UI_options_FTE_title = "Foraging Tooltip Extended",
     UI_options_FTE_showPersistentRadius = "Show Radius before Eye Icon",
     UI_options_FTE_showPersistentRadius_tooltip = "Shows current search radius next to the eye icon (always visible, no hover required)",
+    UI_options_FTE_tooltipValueAlignment = "Tooltip Value Alignment",
+    UI_options_FTE_tooltipValueAlignment_rightAligned = "Right Aligned",
+    UI_options_FTE_tooltipValueAlignment_leftAligned = "Left Aligned",
 }
