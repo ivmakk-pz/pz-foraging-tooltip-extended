@@ -59,7 +59,7 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
     end
     
     -- Get alignment preference from mod options
-    local useRightAlign = FTE_ModOptions.isTooltipValueRightAligned()
+    local alignment = FTE_ModOptions.getTooltipValueAlignment()
     
     -- Use table-based concatenation for better performance
     local parts = {}
@@ -93,10 +93,10 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
 	local isAtMaxRadius = math.abs(visionRadius - searchManager.maxRadiusCap) < 0.01;
 	
 	-- Add main radius text
-	table.insert(parts, FTE_Utils.getToolTipTextRadius(getText("IGUI_SearchMode_Vision_Effect_Radius"), visionRadius, isAtMinRadius, isAtMaxRadius, useRightAlign));
+	table.insert(parts, FTE_Utils.getToolTipTextRadius(getText("IGUI_SearchMode_Vision_Effect_Radius"), visionRadius, isAtMinRadius, isAtMaxRadius, alignment));
 	
 	-- Get value X position for alignment (responsive to font size)
-	local valueXPosition = useRightAlign and FTE_Utils.tooltipLayout.valueXPosition or nil
+	local valueXPosition = alignment == FTE_Utils.Alignment.RIGHT and FTE_Utils.tooltipLayout.valueXPosition or nil
 	
 	-- Collect all base modifiers for display (excluding clothing - it will be replaced by individual items)
 	local modifierItems = {
@@ -144,7 +144,7 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
 			valueToDisplay,
 			isLast,
 			valueXPosition,
-			useRightAlign
+			alignment
 		))
 	end
 	
@@ -164,7 +164,7 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
         local formattedFoodBonus = Colors.good .. FTE_Utils.formatPercentShort(foodDetectionValue) .. "%"
         table.insert(parts, Colors.white)
         table.insert(parts, getText("IGUI_FTE_Food_Detection_Header") .. " (" .. getText("IGUI_StatsAndBody_Hunger") .. ")")
-        if useRightAlign and valueXPosition then
+        if alignment == FTE_Utils.Alignment.RIGHT and valueXPosition then
             table.insert(parts, " <SETX:")
             table.insert(parts, tostring(valueXPosition))
             table.insert(parts, "> ")
@@ -181,7 +181,7 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
     
     table.insert(parts, Colors.white)
     table.insert(parts, getText("IGUI_SearchMode_Vision_Effect_Bonus_Radius"))
-    if useRightAlign and valueXPosition then
+    if alignment == FTE_Utils.Alignment.RIGHT and valueXPosition then
         table.insert(parts, " <SETX:")
         table.insert(parts, tostring(valueXPosition))
         table.insert(parts, "> ")
@@ -232,7 +232,7 @@ local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
 		
 		table.insert(parts, Colors.white)
 		table.insert(parts, item.text)
-		if useRightAlign and valueXPosition then
+		if alignment == FTE_Utils.Alignment.RIGHT and valueXPosition then
 			table.insert(parts, " <SETX:")
 			table.insert(parts, tostring(valueXPosition))
 			table.insert(parts, "> ")

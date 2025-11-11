@@ -45,18 +45,13 @@ function FTE_ModOptions.shouldShowPersistentRadius()
     end
 end
 
--- Get whether to use right-aligned values in tooltips
-function FTE_ModOptions.isTooltipValueRightAligned()
+-- Get tooltip value alignment ("left" or "right")
+function FTE_ModOptions.getTooltipValueAlignment()
     if FTE_Config.tooltipValueAlignment then
-        return FTE_Config.tooltipValueAlignment:getValue() == 1  -- 1 = Right Aligned, 2 = Left Aligned
+        return FTE_Config.tooltipValueAlignment:getValue() == 1 and FTE_Utils.Alignment.RIGHT or FTE_Utils.Alignment.LEFT  -- 1 = Right Aligned, 2 = Left Aligned
     else
-        return true  -- Default to right-aligned when not initialized
+        return FTE_Utils.Alignment.RIGHT  -- Default to right-aligned when not initialized
     end
-end
-
--- Get the raw config object (for advanced usage)
-function FTE_ModOptions.getConfig()
-    return FTE_Config
 end
 
 -- Get a specific option by its field name

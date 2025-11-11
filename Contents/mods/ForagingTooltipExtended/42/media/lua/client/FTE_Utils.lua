@@ -37,10 +37,11 @@ FTE_Utils.IMAGE_PAD = 5  -- Padding on each side of images in ISRichTextPanel
 -- This is the base width before font scaling is applied (from vanilla: 180 * widthScale)
 FTE_Utils.TOOLTIP_BASE_CONTENT_WIDTH = 185
 
--- Percentage-based alignment for tooltip values (responsive to font size changes)
--- This percentage is applied to the available content width (after accounting for value space)
--- Value of 0.70 provides good balance between label space and value space
-FTE_Utils.TOOLTIP_VALUE_ALIGN_PERCENTAGE = 0.70  -- 70% of available content width
+-- Alignment constants (enum-like)
+FTE_Utils.Alignment = {
+    LEFT = "left",
+    RIGHT = "right"
+}
 
 -- Get game colors once at module load
 local GHC = getCore():getGoodHighlitedColor()
@@ -154,42 +155,32 @@ local function calculateTreeConnectorDimensions(font)
     return 4, math.ceil(lineHeight), middlePath, lastPath
 end
 
----Initialize tooltip layout metrics (call once during module setup)
+---Initialize tooltip layout metrics based on current font settings
 function FTE_Utils.initializeTooltipLayout()
     local layout = FTE_Utils.tooltipLayout
     
-    -- Get current tooltip font
     local currentFont = ISToolTip.GetFont and ISToolTip.GetFont() or UIFont.NewSmall
     
-    -- Only recalculate if font changed (cache optimization)
     if layout.currentFont == currentFont and layout.contentWidth > 0 then
-        return  -- Already initialized with current font, no recalculation needed
+        return
     end
     
     layout.currentFont = currentFont
     
-    -- Calculate width scale and font height
     local fontHeight = getTextManager():getFontHeight(layout.currentFont)
     layout.widthScale = fontHeight / 15  -- Same scaling factor used in ISToolTip.layoutContents
     
     -- Calculate tree connector dimensions and paths based on line height and texture aspect ratio
     layout.treeConnectorWidth, layout.treeConnectorHeight, layout.treeConnectorMiddlePath, layout.treeConnectorLastPath = 
         calculateTreeConnectorDimensions(layout.currentFont)
-    
-    -- Calculate item icon height (equals font height for maximum size within boundaries)
+
     layout.itemIconHeight = fontHeight
-    
-    -- Calculate content width (base width scaled by font height)
     layout.contentWidth = FTE_Utils.TOOLTIP_BASE_CONTENT_WIDTH * layout.widthScale
-    
-    -- Calculate max value width ("+999%" is the longest possible value)
     layout.maxValueWidth = getTextManager():MeasureStringX(layout.currentFont, "+999%")
     
-    -- Calculate value X position
     local valueSpaceNeeded = layout.maxValueWidth + (10 * layout.widthScale)
     layout.valueXPosition = math.floor(layout.contentWidth - valueSpaceNeeded)
     
-    -- Calculate max item name width for worn items
     -- Tree connector: base width (scaled) + padding (FIXED pixels, not scaled)
     local treeConnectorTotal = (layout.treeConnectorWidth * layout.widthScale) + (FTE_Utils.IMAGE_PAD * 2)
     -- Item icon: fontHeight (already in pixels) + padding (FIXED pixels, not scaled)
@@ -313,16 +304,6 @@ function FTE_Utils.formatNumber(value)
     return string.format("%.2f", value)
 end
 
----Format percentage values
----@param float number
----@return string formattedPercent
-function FTE_Utils.formatPercent(float)
-    if float == 0 then
-        return "0"
-    end
-    return string.format("%+.2f", float * PERCENTAGE_MULTIPLIER)
-end
-
 ---Format percentage values for bonus sections (shorter format)
 ---Shows integers without decimals (e.g., "+10%"), floats with 1 decimal (e.g., "+5.5%")
 ---@param float number The decimal value (e.g., 0.1 for 10%, 0.055 for 5.5%)
@@ -374,35 +355,15 @@ end
 -- TOOLTIP TEXT GENERATION FUNCTIONS
 -- ===================================================================================================== --
 
----Generate tooltip text for percentage-based values
----@param text string The label text
----@param value number The percentage value
----@param isBonus boolean Whether this is a bonus (true) or penalty (false)
----@return string tooltipText
-function FTE_Utils.getToolTipText(text, value, isBonus)
-    local textWithSpace = text .. ": <SPACE> "
-    local isZero = (value == 0)
-    
-    if isBonus then
-        return " " .. FTE_Utils.Colors.white .. textWithSpace .. 
-               FTE_Utils.getRGBForTooltip(value > 0, isZero) .. 
-               FTE_Utils.formatPercent(value) .. " % <LINE> "
-    else
-        return " " .. FTE_Utils.Colors.white .. textWithSpace .. 
-               FTE_Utils.getRGBForTooltip(value < 0, isZero) .. 
-               FTE_Utils.formatPercent(value) .. " % <LINE> "
-    end
-end
-
 ---Generate tooltip text for radius values with min/max indicators
 ---@param text string The label text
 ---@param value number The radius value
 ---@param isAtMinRadius boolean
 ---@param isAtMaxRadius boolean
----@param useRightAlign boolean|nil Optional: whether to right-align values (default: true)
+---@param alignment string|nil Optional: FTE_Utils.Alignment.LEFT or FTE_Utils.Alignment.RIGHT (default: RIGHT)
 ---@return string tooltipText
-function FTE_Utils.getToolTipTextRadius(text, value, isAtMinRadius, isAtMaxRadius, useRightAlign)
-    if useRightAlign == nil then useRightAlign = true end
+function FTE_Utils.getToolTipTextRadius(text, value, isAtMinRadius, isAtMaxRadius, alignment)
+    alignment = alignment or FTE_Utils.Alignment.RIGHT
     
     local color = FTE_Utils.Colors.white -- White for normal radius values
     local labelSuffix = ""
@@ -415,7 +376,7 @@ function FTE_Utils.getToolTipTextRadius(text, value, isAtMinRadius, isAtMaxRadiu
         labelSuffix = " <SPACE> " .. FTE_Utils.Colors.good .. "(max)" .. FTE_Utils.Colors.white
     end
     
-    if useRightAlign then
+    if alignment == FTE_Utils.Alignment.RIGHT then
         local xPosition = FTE_Utils.tooltipLayout.valueXPosition
         return " " .. FTE_Utils.Colors.white .. text .. labelSuffix .. " <SETX:" .. xPosition .. "> " .. 
                color .. FTE_Utils.formatNumber(value) .. " <LINE> "
@@ -425,31 +386,15 @@ function FTE_Utils.getToolTipTextRadius(text, value, isAtMinRadius, isAtMaxRadiu
     end
 end
 
----Generate tooltip text for sub-values with prefixes
----@param text string The label text
----@param value number
----@param suffix string Optional suffix (default: "")
----@param prefix string Optional prefix (default: "- ")
----@return string tooltipText
-function FTE_Utils.getToolTipTextSubValue(text, value, suffix, prefix)
-    local actualPrefix = prefix or "- "
-    local actualSuffix = suffix or ""
-    
-    local color = FTE_Utils.getRGBForValue(value)
-    
-    return " " .. FTE_Utils.Colors.white .. actualPrefix .. text .. ": <SPACE> " .. 
-           color .. FTE_Utils.formatNumber(value) .. actualSuffix .. " <LINE> "
-end
-
 ---Generate tooltip text with tree connector image
 ---@param text string The label text
 ---@param value number|string The value to display (number for auto-formatting, or pre-formatted string with color)
 ---@param isLast boolean Whether this is the last item (uses last_connector instead of middle_connector)
 ---@param setXPosition number|nil Optional X position for value alignment (uses <SETX> for column alignment)
----@param useRightAlign boolean|nil Optional: whether to use right-align when setXPosition is provided (default: true)
+---@param alignment string|nil Optional: FTE_Utils.Alignment.LEFT or FTE_Utils.Alignment.RIGHT (default: RIGHT)
 ---@return string tooltipText
-function FTE_Utils.getToolTipTextWithTreeImage(text, value, isLast, setXPosition, useRightAlign)
-    if useRightAlign == nil then useRightAlign = true end
+function FTE_Utils.getToolTipTextWithTreeImage(text, value, isLast, setXPosition, alignment)
+    alignment = alignment or FTE_Utils.Alignment.RIGHT
     
     local imageTag = FTE_Utils.getTreeConnectorImageTag(isLast)
     
@@ -462,7 +407,7 @@ function FTE_Utils.getToolTipTextWithTreeImage(text, value, isLast, setXPosition
         formattedValue = tostring(value)  -- Already formatted string with color
     end
     
-    if setXPosition and useRightAlign then
+    if setXPosition and alignment == FTE_Utils.Alignment.RIGHT then
         -- Use SETX for column-aligned values - place SETX before the colon to prevent wrapping
         return " " .. imageTag .. FTE_Utils.Colors.white .. text .. " <SETX:" .. setXPosition .. "> " .. 
                formattedValue .. " <LINE> "
@@ -471,42 +416,6 @@ function FTE_Utils.getToolTipTextWithTreeImage(text, value, isLast, setXPosition
         return " " .. imageTag .. FTE_Utils.Colors.white .. text .. ": <SPACE> " .. 
                formattedValue .. " <LINE> "
     end
-end
-
----Generate tooltip header text with aligned value (for section headers like D, E, F)
----@param text string The header text (e.g., "D. Best Vision Bonus")
----@param value number The value to display
----@param useRightAlign boolean|nil Optional: whether to right-align values (default: true)
----@return string tooltipText
-function FTE_Utils.getToolTipHeaderWithAlignment(text, value, useRightAlign)
-    if useRightAlign == nil then useRightAlign = true end
-    
-    local color = FTE_Utils.getRGBForValue(value)
-    
-    if useRightAlign then
-        local xPosition = FTE_Utils.tooltipLayout.valueXPosition
-        return " " .. FTE_Utils.Colors.white .. text .. " <SETX:" .. xPosition .. "> " ..
-               color .. FTE_Utils.formatNumber(value) .. " <LINE> "
-    else
-        return " " .. FTE_Utils.Colors.white .. text .. ": <SPACE> " ..
-               color .. FTE_Utils.formatNumber(value) .. " <LINE> "
-    end
-end
-
----Calculate maximum label width for a set of labels (for column alignment)
----@param labels table Array of label strings
----@param font any UIFont enum (default: UIFont.NewSmall)
----@return number maxWidth Maximum width in pixels
-function FTE_Utils.calculateMaxLabelWidth(labels, font)
-    font = font or UIFont.NewSmall
-    local maxWidth = 0
-    
-    for i = 1, #labels do
-        local labelWidth = getTextManager():MeasureStringX(font, labels[i])
-        maxWidth = math.max(maxWidth, labelWidth)
-    end
-    
-    return maxWidth
 end
 
 ---Truncate text to fit within maximum width, adding ellipsis if needed
@@ -573,46 +482,6 @@ function FTE_Utils.sortTooltipItems(items)
         -- If both are zero or both are non-zero, maintain original order
         return a.originalIndex < b.originalIndex
     end)
-end
-
--- ===================================================================================================== --
--- DEBUG FUNCTIONS
--- ===================================================================================================== --
-
-local debugMarkers = {}
-local lastDebugCoords = {}
-
----Draw debug circle at specified coordinates (for development purposes only)
----@param x number
----@param y number 
----@param z number
----@param radius number
----@return unknown|nil marker The created marker or nil if failed
-function FTE_Utils.drawDebugCircle(x, y, z, radius)
-    -- Clean up previous markers if coordinates changed
-    if lastDebugCoords.x ~= x or lastDebugCoords.y ~= y or lastDebugCoords.z ~= z then
-        for _, marker in pairs(debugMarkers) do
-            if marker then
-                marker:remove();
-            end
-        end
-        debugMarkers = {};
-        lastDebugCoords = {x = x, y = y, z = z};
-    end
-    
-    local square = getCell():getGridSquare(x, y, z);
-    if square then
-        local marker = getIsoMarkers():addIsoMarker(
-            "media/textures/Foraging/pinIconBlank.png",
-            square,
-            1, 0.5, 0, 0.35  -- Orange color (R=1, G=0.5, B=0)
-        );
-        if marker then
-            marker:setCircleSize(radius);
-            table.insert(debugMarkers, marker);
-            return marker;
-        end
-    end
 end
 
 -- ===================================================================================================== --
