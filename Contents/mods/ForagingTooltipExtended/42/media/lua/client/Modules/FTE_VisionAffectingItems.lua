@@ -186,7 +186,7 @@ end
 
 ---Setup the vision-affecting items module
 function FTE_VisionAffectingItems:setupModule()
-    FTE_Utils.logInfo("[VisionAffectingItems] Module initialized successfully")
+    FTE_Utils.logInfo("FTE_VisionAffectingItems initialized")
 end
 
 -- ===================================================================================================== --

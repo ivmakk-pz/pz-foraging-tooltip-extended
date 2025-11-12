@@ -193,12 +193,7 @@ function FTE_SearchRadiusDisplay:setupModule()
     -- Override ISZoneDisplay:render() using module's safe override system
     local success = self:overrideFunction(ISZoneDisplay, "render", ISZoneDisplay_render)
     
-    if success then
-        FTE_Utils.logInfo("FTE_SearchRadiusDisplay: Module initialized successfully")
-    else
-        FTE_Utils.logError("FTE_SearchRadiusDisplay: Failed to patch ISZoneDisplay:render()")
-        error("Failed to initialize FTE_SearchRadiusDisplay")
-    end
+    FTE_Utils.logInfo("FTE_SearchRadiusDisplay initialized")
 end
 
 -- ===================================================================================================== --
@@ -216,7 +211,6 @@ function FTE_SearchRadiusDisplay:clearCache()
     instance._cachedRadius = nil
     instance._cachedText = nil
     instance._cachedColor = nil
-    FTE_Utils.logDebug("FTE_SearchRadiusDisplay: Cache cleared")
 end
 
 -- ===================================================================================================== --

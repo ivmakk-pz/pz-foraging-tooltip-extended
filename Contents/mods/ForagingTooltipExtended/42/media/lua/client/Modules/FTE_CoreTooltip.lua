@@ -333,11 +333,9 @@ end
 
 ---Setup the core tooltip module
 function FTE_CoreTooltip:setupModule()
-    FTE_Utils.logInfo("FTE_CoreTooltip: Setting up core tooltip enhancement module")
-
     self:overrideFunction(ISZoneDisplay, "getVisionTooltipText", ISZoneDisplay_getVisionTooltipText)
     
-    FTE_Utils.logInfo("FTE_CoreTooltip: Core tooltip enhancement module setup complete")
+    FTE_Utils.logInfo("FTE_CoreTooltip initialized")
 end
 
 -- ===================================================================================================== --
