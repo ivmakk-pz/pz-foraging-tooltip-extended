@@ -20,13 +20,12 @@ local DEBUG_MODE = false
 local TREE_CONNECTOR_SIZES = {16, 19, 26, 33, 38}  -- Available texture sizes
 
 -- Font size to texture size mapping (with fallback reuse for larger fonts)
--- Font sizes: ~16px (Small), ~19px (Medium), ~26px (Large), ~33px (Massive), ~38px (Huge)
 local FONT_TO_TEXTURE_MAP = {
-    [16] = 16,  -- Small font -> 16px texture (native)
-    [19] = 19,  -- Medium font -> 19px texture (native)
-    [26] = 26,  -- Large font -> 26px texture (native)
-    [33] = 33,  -- Massive font -> 33px texture (native)
-    [38] = 38   -- Huge font -> 38px texture (native)
+    [16] = 16,
+    [19] = 19,
+    [26] = 26,
+    [33] = 33,
+    [38] = 38
 }
 
 -- Image padding constant (matches ISRichTextPanel's IMAGE_PAD value)
@@ -85,10 +84,8 @@ FTE_Utils.tooltipLayout = {
 ---@param lineHeight number Current font line height in pixels
 ---@return number textureSize Best matching texture size (fallback: 16px for unsupported sizes)
 local function selectBestTextureSize(lineHeight)
-    -- Round line height to nearest integer for mapping
     local roundedHeight = math.floor(lineHeight + 0.5)
     
-    -- Check if we have an exact mapping for this font size
     if FONT_TO_TEXTURE_MAP[roundedHeight] then
         return FONT_TO_TEXTURE_MAP[roundedHeight]
     end
@@ -121,7 +118,6 @@ end
 ---@return string middlePath Path to middle connector texture
 ---@return string lastPath Path to last connector texture
 local function calculateTreeConnectorDimensions(font)
-    -- Calculate line height (matches ISRichTextPanel behavior)
     local lineHeight = getTextManager():getFontFromEnum(font):getLineHeight()
     -- Apply same minimum as vanilla ISRichTextPanel
     if lineHeight < 10 then
@@ -239,7 +235,6 @@ local function logMessage(message, level)
         return
     end
     
-    -- Ensure message is always a string
     local safeMessage = message
     if type(message) ~= "string" then
         safeMessage = tostring(message)
@@ -368,10 +363,10 @@ function FTE_Utils.getToolTipTextRadius(text, value, isAtMinRadius, isAtMaxRadiu
     local labelSuffix = ""
     
     if isAtMinRadius then
-        color = FTE_Utils.Colors.bad -- Red value when at minimum
+        color = FTE_Utils.Colors.bad
         labelSuffix = " <SPACE> " .. FTE_Utils.Colors.bad .. "(min)" .. FTE_Utils.Colors.white
     elseif isAtMaxRadius then
-        color = FTE_Utils.Colors.good -- Green value when at maximum
+        color = FTE_Utils.Colors.good
         labelSuffix = " <SPACE> " .. FTE_Utils.Colors.good .. "(max)" .. FTE_Utils.Colors.white
     end
     

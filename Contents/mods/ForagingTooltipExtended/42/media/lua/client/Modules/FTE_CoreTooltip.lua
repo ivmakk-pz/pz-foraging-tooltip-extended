@@ -17,24 +17,279 @@ local FTE_CoreTooltip = FTE_ModuleBase:derive("FTE_CoreTooltip")
 local instance = FTE_CoreTooltip:new()
 ---@cast instance FTE_CoreTooltip
 
--- Store reference to modified panel and original value for cleanup
-local modifiedTipPanel = nil
-local originalMaxLineWidth = nil
-
-
-
 -- ===================================================================================================== --
 -- TOOLTIP BUILDING HELPER FUNCTIONS
 -- ===================================================================================================== --
 
 local Colors = FTE_Utils.Colors
 
+---Get hunger-based food detection bonus
 ---@param character IsoGameCharacter
 ---@return number
 local function getHungerBonus(character)
 	local hungerLevel = character:getStats():getHunger();
 	local hungerBonus = 1 + ((forageSystem.hungerBonusMax * hungerLevel) / 100);
 	return hungerBonus;
+end
+
+---Add aligned label and value to parts table (eliminates repeated alignment logic)
+---@param parts table Array to append formatted text to
+---@param label string The label text (will be colored white)
+---@param value string The value text (pre-formatted with color)
+---@param valueXPos number|nil X position for right alignment (nil for left alignment)
+---@param alignment string Alignment constant from FTE_Utils.Alignment ("left" or "right")
+local function addAlignedValue(parts, label, value, valueXPos, alignment)
+	table.insert(parts, Colors.white)
+	table.insert(parts, label)
+	if alignment == FTE_Utils.Alignment.RIGHT and valueXPos then
+		table.insert(parts, " <SETX:")
+		table.insert(parts, tostring(valueXPos))
+		table.insert(parts, "> ")
+	else
+		table.insert(parts, ": <SPACE> ")
+	end
+	table.insert(parts, value)
+	table.insert(parts, " <LINE> ")
+end
+
+---Collect radius data and modifiers from zone display
+---@param zoneDisplay ISZoneDisplay
+---@return table {visionRadius, modifiers, baseRadius, minRadius, maxRadius, isAtMinRadius, isAtMaxRadius}
+local function collectRadiusData(zoneDisplay)
+	local searchManager = zoneDisplay.manager
+	local visionRadius = searchManager:getOverlayRadius()
+	local modifiers = searchManager.modifiers
+	
+	-- Calculate detailed radius breakdown
+	searchManager:updateModifiers()
+	local traitBonus = modifiers.traitBonus
+	local professionBonus = modifiers.professionBonus
+	local minRadius = searchManager.minRadius + professionBonus + traitBonus
+	local maxRadius = searchManager.maxRadius + professionBonus + traitBonus
+	local levelRadius = (maxRadius - minRadius) * (searchManager.perkLevel / 10)
+	local baseRadius = minRadius + levelRadius
+	
+	-- Check if at min/max caps
+	local isAtMinRadius = math.abs(visionRadius - searchManager.minRadius) < 0.01
+	local isAtMaxRadius = math.abs(visionRadius - searchManager.maxRadiusCap) < 0.01
+	
+	return {
+		visionRadius = visionRadius,
+		modifiers = modifiers,
+		baseRadius = baseRadius,
+		minRadius = minRadius,
+		maxRadius = maxRadius,
+		isAtMinRadius = isAtMinRadius,
+		isAtMaxRadius = isAtMaxRadius
+	}
+end
+
+---Collect base modifier items for display
+---@param modifiers table Modifier data from search manager
+---@param baseRadius number Calculated base radius value
+---@return table Array of {text, value, showAlways, forceWhite}
+local function collectBaseModifiers(modifiers, baseRadius)
+	local visionBonus = math.max(modifiers.aimBonus, modifiers.sneakBonus)
+	
+	return {
+		{text = getText("IGUI_FTE_SearchMode_Vision_Effect_Base_Skill_Traits"), value = baseRadius, showAlways = true, forceWhite = true},
+		{text = getText("IGUI_SearchMode_Vision_Effect_Weather"), value = modifiers.weatherPenalty},
+		{text = getText("IGUI_SearchMode_Vision_Effect_Darkness"), value = modifiers.lightPenalty},
+		{text = modifiers.aimBonus >= modifiers.sneakBonus and getText("IGUI_SearchMode_Vision_Effect_Aiming") or getText("IGUI_SearchMode_Vision_Effect_Crouching"), value = visionBonus},
+		{text = getText("IGUI_FTE_SearchMode_Vision_Effect_Exhaustion"), value = modifiers.exhaustionPenalty},
+		{text = getText("IGUI_StatsAndBody_Panic"), value = modifiers.panicPenalty},
+		{text = getText("IGUI_FTE_SearchMode_Vision_Effect_Body_Damage"), value = modifiers.bodyPenalty},
+		{text = getText("IGUI_SearchMode_Vision_Effect_Movement"), value = modifiers.movementPenalty}
+	}
+end
+
+---Collect bonus data (trait/profession and food detection)
+---@param character IsoGameCharacter
+---@param modifiers table Modifier data from search manager
+---@return table {totalBonus, hungerBonus, hasFoodDetection}
+local function collectBonusData(character, modifiers)
+	local totalBonus = modifiers.professionBonus + modifiers.traitBonus
+	local hungerBonus = getHungerBonus(character)
+	local hasFoodDetection = hungerBonus > 1.01
+	
+	return {
+		totalBonus = totalBonus,
+		hungerBonus = hungerBonus,
+		hasFoodDetection = hasFoodDetection
+	}
+end
+
+---Collect and sort character effect items (weather, darkness, category bonuses)
+---@param character IsoGameCharacter
+---@return table Sorted array of {text, value, isBonus}
+local function collectCharacterEffects(character)
+	local characterItems = {}
+	
+	-- Add weather and darkness effects
+	table.insert(characterItems, {
+		text = getText("IGUI_SearchMode_Vision_Effect_Weather"),
+		value = forageSystem.getWeatherEffectReduction(character) - 1,
+		isBonus = false
+	})
+	table.insert(characterItems, {
+		text = getText("IGUI_SearchMode_Vision_Effect_Darkness"),
+		value = forageSystem.getDarknessEffectReduction(character) - 1,
+		isBonus = false
+	})
+	
+	-- Add category bonuses
+	for _, catDef in pairs(forageSystem.catDefs) do
+		if catDef and catDef.name then
+			local catVisionEffect = forageSystem.getCategoryBonus(character, catDef) - 1
+			local categoryText = getTextOrNull("IGUI_SearchMode_Categories_"..catDef.name)
+			if categoryText then
+				table.insert(characterItems, {
+					text = categoryText,
+					value = catVisionEffect,
+					isBonus = true
+				})
+			end
+		end
+	end
+	
+	-- Sort (non-zero first, then zero)
+	FTE_Utils.sortTooltipItems(characterItems)
+	
+	return characterItems
+end
+
+---Format main radius section with min/max indicators
+---@param radiusData table Data from collectRadiusData()
+---@param alignment string Alignment constant ("left" or "right")
+---@return string Formatted text parts
+local function formatMainRadiusSection(radiusData, alignment)
+	return FTE_Utils.getToolTipTextRadius(
+		getText("IGUI_SearchMode_Vision_Effect_Radius"),
+		radiusData.visionRadius,
+		radiusData.isAtMinRadius,
+		radiusData.isAtMaxRadius,
+		alignment
+	)
+end
+
+---Format base modifiers section with tree connectors
+---@param baseModifiers table Array of modifier items
+---@param wornItems table Array of worn item effects
+---@param valueXPos number|nil X position for alignment
+---@param alignment string Alignment constant ("left" or "right")
+---@return string Formatted text string
+local function formatBaseModifiersSection(baseModifiers, wornItems, valueXPos, alignment)
+	local parts = {}
+	
+	-- Filter base modifiers: show always-visible items and items with impact
+	local displayItems = {}
+	for i = 1, #baseModifiers do
+		local item = baseModifiers[i]
+		if item.showAlways or math.abs(item.value - 1) >= 0.01 then
+			table.insert(displayItems, item)
+		end
+	end
+	
+	-- Add worn items to display list
+	for i = 1, #wornItems do
+		table.insert(displayItems, wornItems[i])
+	end
+	
+	-- Add all items with tree connectors
+	for i = 1, #displayItems do
+		local item = displayItems[i]
+		local isLast = (i == #displayItems)
+		
+		-- Handle forceWhite flag for values that should always be white
+		local valueToDisplay = item.value
+		if item.forceWhite then
+			valueToDisplay = Colors.white .. FTE_Utils.formatNumber(item.value)
+		end
+		
+		table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage(
+			item.text,
+			valueToDisplay,
+			isLast,
+			valueXPos,
+			alignment
+		))
+	end
+	
+	table.insert(parts, " <LINE> ")
+	
+	return table.concat(parts)
+end
+
+---Format trait/profession bonus section with food detection
+---@param bonusData table Data from collectBonusData()
+---@param valueXPos number|nil X position for alignment
+---@param alignment string Alignment constant ("left" or "right")
+---@return string Formatted text string
+local function formatBonusSection(bonusData, valueXPos, alignment)
+	local parts = {}
+	
+	-- Section header
+	table.insert(parts, Colors.white)
+	table.insert(parts, getText("IGUI_SearchMode_Vision_Effect_Trait_Profession_Bonuses"))
+	table.insert(parts, " <LINE> ")
+	
+	-- Food detection bonus (if applicable)
+	if bonusData.hasFoodDetection then
+		local foodDetectionValue = bonusData.hungerBonus - 1.0
+		local formattedFoodBonus = Colors.good .. FTE_Utils.formatPercentShort(foodDetectionValue) .. "%"
+		addAlignedValue(
+			parts,
+			getText("IGUI_FTE_Food_Detection_Header") .. " (" .. getText("IGUI_StatsAndBody_Hunger") .. ")",
+			formattedFoodBonus,
+			valueXPos,
+			alignment
+		)
+	end
+	
+	-- Total bonus radius
+	local bonusColor = FTE_Utils.getRGBForTooltip(bonusData.totalBonus > 0, bonusData.totalBonus == 0)
+	local formattedTotalBonus = bonusColor .. string.format("%+.1f", bonusData.totalBonus)
+	addAlignedValue(
+		parts,
+		getText("IGUI_SearchMode_Vision_Effect_Bonus_Radius"),
+		formattedTotalBonus,
+		valueXPos,
+		alignment
+	)
+	
+	return table.concat(parts)
+end
+
+---Format character effects section (weather, darkness, categories)
+---@param characterEffects table Array from collectCharacterEffects()
+---@param valueXPos number|nil X position for alignment
+---@param alignment string Alignment constant ("left" or "right")
+---@return string Formatted text string
+local function formatCharacterEffectsSection(characterEffects, valueXPos, alignment)
+	local parts = {}
+	
+	-- Filter items that should be displayed
+	local displayItems = {}
+	for i = 1, #characterEffects do
+		local item = characterEffects[i]
+		if not item.isBonus or item.value ~= 0 then
+			table.insert(displayItems, item)
+		end
+	end
+	
+	-- Add filtered items
+	for i = 1, #displayItems do
+		local item = displayItems[i]
+		
+		-- Format percentage value with proper color
+		local valueColor = item.isBonus and FTE_Utils.getRGBForTooltip(item.value > 0, item.value == 0)
+		                                  or FTE_Utils.getRGBForTooltip(item.value < 0, item.value == 0)
+		local formattedValue = valueColor .. FTE_Utils.formatPercentShort(item.value) .. "%"
+		
+		addAlignedValue(parts, item.text, formattedValue, valueXPos, alignment)
+	end
+	
+	return table.concat(parts)
 end
 
 -- ===================================================================================================== --
@@ -45,205 +300,31 @@ end
 ---@param zoneDisplay ISZoneDisplay
 ---@return string
 local function ISZoneDisplay_getVisionTooltipText(zoneDisplay)
-    -- Reinitialize tooltip layout to detect font changes (lightweight, only when tooltip shows)
-    FTE_Utils.initializeTooltipLayout()
-    
-    -- Configure tooltip panel to prevent soft wrapping (only once)
-    if zoneDisplay.tipPanel and modifiedTipPanel == nil then
-        -- Store reference to panel and original value for cleanup
-        modifiedTipPanel = zoneDisplay.tipPanel
-        originalMaxLineWidth = zoneDisplay.tipPanel.maxLineWidth
-        
-        -- Set large value to prevent soft wrapping
-        zoneDisplay.tipPanel.maxLineWidth = 10000
-    end
-    
-    -- Get alignment preference from mod options
-    local alignment = FTE_ModOptions.getTooltipValueAlignment()
-    
-    -- Use table-based concatenation for better performance
-    local parts = {}
-
-    ---@type ISSearchManager
-    local searchManager = zoneDisplay.manager;
-	local visionRadius	= searchManager:getOverlayRadius();
-	local modifiers		= searchManager.modifiers;
-
-	-- Calculate detailed radius breakdown based on getOverlayRadiusB429
-	searchManager:updateModifiers();
-	local traitBonus = modifiers.traitBonus;
-	local professionBonus = modifiers.professionBonus;
-	local minRadius = zoneDisplay.manager.minRadius + professionBonus + traitBonus;
-	local maxRadius = zoneDisplay.manager.maxRadius + professionBonus + traitBonus;
-	local levelRadius = (maxRadius - minRadius) * (zoneDisplay.manager.perkLevel / 10);
-	local baseRadius = minRadius + levelRadius;
-
-	-- Reorganize variables for new layout
-	local visionBonus = math.max(modifiers.aimBonus, modifiers.sneakBonus);
-	local darknessMultiplier = modifiers.lightPenalty;
-	local weatherPenalty = modifiers.weatherPenalty;
-	local clothingPenalty = modifiers.clothingPenalty;
-	local exhaustionPenalty = modifiers.exhaustionPenalty;
-	local panicPenalty = modifiers.panicPenalty;
-	local bodyPenalty = modifiers.bodyPenalty;
-	local movementPenalty = modifiers.movementPenalty;
+	-- Initialize tooltip layout to detect font changes
+	FTE_Utils.initializeTooltipLayout()
 	
-	-- Check if current radius equals minimum or maximum radius
-	local isAtMinRadius = math.abs(visionRadius - searchManager.minRadius) < 0.01;
-	local isAtMaxRadius = math.abs(visionRadius - searchManager.maxRadiusCap) < 0.01;
+	-- Get alignment preference
+	local alignment = FTE_ModOptions.getTooltipValueAlignment()
+	local valueXPos = alignment == FTE_Utils.Alignment.RIGHT and FTE_Utils.tooltipLayout.valueXPosition or nil
 	
-	-- Add main radius text
-	table.insert(parts, FTE_Utils.getToolTipTextRadius(getText("IGUI_SearchMode_Vision_Effect_Radius"), visionRadius, isAtMinRadius, isAtMaxRadius, alignment));
+	-- Collect all data
+	local radiusData = collectRadiusData(zoneDisplay)
+	local baseModifiers = collectBaseModifiers(radiusData.modifiers, radiusData.baseRadius)
+	local wornItems = FTE_VisionAffectingItems.getWornItemsForTooltip(
+		zoneDisplay.character,
+		radiusData.modifiers.clothingPenalty
+	)
+	local bonusData = collectBonusData(zoneDisplay.character, radiusData.modifiers)
+	local characterEffects = collectCharacterEffects(zoneDisplay.character)
 	
-	-- Get value X position for alignment (responsive to font size)
-	local valueXPosition = alignment == FTE_Utils.Alignment.RIGHT and FTE_Utils.tooltipLayout.valueXPosition or nil
+	-- Build tooltip sections
+	local parts = {}
+	table.insert(parts, formatMainRadiusSection(radiusData, alignment))
+	table.insert(parts, formatBaseModifiersSection(baseModifiers, wornItems, valueXPos, alignment))
+	table.insert(parts, formatBonusSection(bonusData, valueXPos, alignment))
+	table.insert(parts, formatCharacterEffectsSection(characterEffects, valueXPos, alignment))
 	
-	-- Collect all base modifiers for display (excluding clothing - it will be replaced by individual items)
-	local modifierItems = {
-		{text = getText("IGUI_FTE_SearchMode_Vision_Effect_Base_Skill_Traits"), value = baseRadius, showAlways = true, forceWhite = true},
-		{text = getText("IGUI_SearchMode_Vision_Effect_Weather"), value = weatherPenalty},
-		{text = getText("IGUI_SearchMode_Vision_Effect_Darkness"), value = darknessMultiplier},
-		{text = modifiers.aimBonus >= modifiers.sneakBonus and getText("IGUI_SearchMode_Vision_Effect_Aiming") or getText("IGUI_SearchMode_Vision_Effect_Crouching"), value = visionBonus},
-		{text = getText("IGUI_FTE_SearchMode_Vision_Effect_Exhaustion"), value = exhaustionPenalty},
-		{text = getText("IGUI_StatsAndBody_Panic"), value = panicPenalty},
-		{text = getText("IGUI_FTE_SearchMode_Vision_Effect_Body_Damage"), value = bodyPenalty},
-		{text = getText("IGUI_SearchMode_Vision_Effect_Movement"), value = movementPenalty}
-	}
-	
-	-- Get vision-affecting worn items
-	local wornItems = FTE_VisionAffectingItems.getWornItemsForTooltip(zoneDisplay.character, clothingPenalty)
-	
-	-- Filter base modifiers: show always-visible items and items with impact
-	local displayItems = {}
-	for i = 1, #modifierItems do
-		local item = modifierItems[i]
-		if item.showAlways or math.abs(item.value - 1) >= 0.01 then
-			table.insert(displayItems, item)
-		end
-	end
-	
-	-- Add vision-affecting worn items to display list
-	for i = 1, #wornItems do
-		table.insert(displayItems, wornItems[i])
-	end
-	
-	-- Add all modifier items with proper tree connectors
-	for i = 1, #displayItems do
-		local item = displayItems[i]
-		local isLast = (i == #displayItems)
-		
-		-- Handle forceWhite flag for values that should always be white
-		local valueToDisplay = item.value
-		if item.forceWhite then
-			-- Pre-format the value as white instead of using auto-coloring
-			valueToDisplay = Colors.white .. FTE_Utils.formatNumber(item.value)
-		end
-		
-		table.insert(parts, FTE_Utils.getToolTipTextWithTreeImage(
-			item.text,
-			valueToDisplay,
-			isLast,
-			valueXPosition,
-			alignment
-		))
-	end
-	
-	table.insert(parts, " <LINE> ");
-
-    -- Add trait/profession bonuses section
-    local totalBonus = modifiers.professionBonus + modifiers.traitBonus
-    table.insert(parts, Colors.white);
-    table.insert(parts, getText("IGUI_SearchMode_Vision_Effect_Trait_Profession_Bonuses"));
-    table.insert(parts, " <LINE> ");
-    
-    -- Add food detection bonus first (if applicable)
-    local hungerBonus = getHungerBonus(zoneDisplay.character)
-    local hasFoodDetection = hungerBonus > 1.01
-    if hasFoodDetection then
-        local foodDetectionValue = hungerBonus - 1.0
-        local formattedFoodBonus = Colors.good .. FTE_Utils.formatPercentShort(foodDetectionValue) .. "%"
-        table.insert(parts, Colors.white)
-        table.insert(parts, getText("IGUI_FTE_Food_Detection_Header") .. " (" .. getText("IGUI_StatsAndBody_Hunger") .. ")")
-        if alignment == FTE_Utils.Alignment.RIGHT and valueXPosition then
-            table.insert(parts, " <SETX:")
-            table.insert(parts, tostring(valueXPosition))
-            table.insert(parts, "> ")
-        else
-            table.insert(parts, ": <SPACE> ")
-        end
-        table.insert(parts, formattedFoodBonus)
-        table.insert(parts, " <LINE> ")
-    end
-    
-    -- Format total bonus with proper color and sign (1 decimal place)
-    local bonusColor = FTE_Utils.getRGBForTooltip(totalBonus > 0, totalBonus == 0)
-    local formattedTotalBonus = bonusColor .. string.format("%+.1f", totalBonus)
-    
-    table.insert(parts, Colors.white)
-    table.insert(parts, getText("IGUI_SearchMode_Vision_Effect_Bonus_Radius"))
-    if alignment == FTE_Utils.Alignment.RIGHT and valueXPosition then
-        table.insert(parts, " <SETX:")
-        table.insert(parts, tostring(valueXPosition))
-        table.insert(parts, "> ")
-    else
-        table.insert(parts, ": <SPACE> ")
-    end
-    table.insert(parts, formattedTotalBonus)
-    table.insert(parts, " <LINE> ")
-	
-	-- Collect character effect items for sorting
-	local characterItems = {};
-	
-	-- Add weather and darkness effects
-	table.insert(characterItems, {text = getText("IGUI_SearchMode_Vision_Effect_Weather"), value = forageSystem.getWeatherEffectReduction(zoneDisplay.character) - 1, isBonus = false});
-	table.insert(characterItems, {text = getText("IGUI_SearchMode_Vision_Effect_Darkness"), value = forageSystem.getDarknessEffectReduction(zoneDisplay.character) - 1, isBonus = false});
-	
-	-- Add category bonuses to character items
-	for _, catDef in pairs(forageSystem.catDefs) do
-		if catDef and catDef.name then
-			local catVisionEffect = forageSystem.getCategoryBonus(zoneDisplay.character, catDef) - 1;
-			local categoryText = getTextOrNull("IGUI_SearchMode_Categories_"..catDef.name);
-			if categoryText then
-				table.insert(characterItems, {text = categoryText, value = catVisionEffect, isBonus = true})
-			end;
-		end
-	end
-	
-	-- Sort character items (non-zero first, then zero)
-	FTE_Utils.sortTooltipItems(characterItems)
-
-    -- Filter items that should be displayed and add them to text
-	local displayBonusItems = {}
-	for i = 1, #characterItems do
-		local item = characterItems[i]
-		if not item.isBonus or item.value ~= 0 then
-			table.insert(displayBonusItems, item)
-		end
-	end
-	
-	-- Add filtered items without tree connectors
-	for i = 1, #displayBonusItems do
-		local item = displayBonusItems[i]
-		
-		-- Format percentage value with proper color (using short format)
-		local valueColor = item.isBonus and FTE_Utils.getRGBForTooltip(item.value > 0, item.value == 0) 
-		                                  or FTE_Utils.getRGBForTooltip(item.value < 0, item.value == 0)
-		local formattedValue = valueColor .. FTE_Utils.formatPercentShort(item.value) .. "%"
-		
-		table.insert(parts, Colors.white)
-		table.insert(parts, item.text)
-		if alignment == FTE_Utils.Alignment.RIGHT and valueXPosition then
-			table.insert(parts, " <SETX:")
-			table.insert(parts, tostring(valueXPosition))
-			table.insert(parts, "> ")
-		else
-			table.insert(parts, ": <SPACE> ")
-		end
-		table.insert(parts, formattedValue)
-		table.insert(parts, " <LINE> ")
-	end
-
-	return table.concat(parts);
+	return table.concat(parts)
 end
 
 -- ===================================================================================================== --
@@ -257,20 +338,6 @@ function FTE_CoreTooltip:setupModule()
     self:overrideFunction(ISZoneDisplay, "getVisionTooltipText", ISZoneDisplay_getVisionTooltipText)
     
     FTE_Utils.logInfo("FTE_CoreTooltip: Core tooltip enhancement module setup complete")
-end
-
----Override destroy to restore property modifications before base cleanup
-function FTE_CoreTooltip:destroy()
-    -- Restore maxLineWidth property if we modified it
-    if modifiedTipPanel ~= nil and originalMaxLineWidth ~= nil then
-        modifiedTipPanel.maxLineWidth = originalMaxLineWidth
-        FTE_Utils.logInfo("FTE_CoreTooltip: Restored tipPanel.maxLineWidth to " .. tostring(originalMaxLineWidth))
-        modifiedTipPanel = nil
-        originalMaxLineWidth = nil
-    end
-    
-    -- Call base destroy to restore function overrides and cleanup events
-    FTE_ModuleBase.destroy(self)
 end
 
 -- ===================================================================================================== --

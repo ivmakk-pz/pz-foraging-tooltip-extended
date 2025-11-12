@@ -3,7 +3,6 @@
 
 local FTE_ModuleBase = require("Core/FTE_ModuleBase")
 local FTE_Utils = require("FTE_Utils")
-local FTE_ModOptions = require("FTE_ModOptions")
 
 require "Foraging/forageSystem"
 
@@ -48,11 +47,7 @@ local function calculateItemPenalty(wornItem)
     local item = wornItem:getItem()
     if not item then return nil end
     
-    -- Calculate multiplier from penalty percentage
-    -- Formula: 1 - (penalty / 100)
     local multiplier = 1 - (penaltyPercent / 100)
-    
-    -- Get item display information
     local displayName = item:getDisplayName() or item:getName() or "Unknown Item"
     
     -- Get icon - use getIcon() which returns Texture object
@@ -112,9 +107,8 @@ end
 
 ---Get all vision-affecting items worn by character
 ---@param character IsoPlayer The player character
----@param showZeroPenalty boolean|nil If true, include items with zero/minimal penalty
 ---@return table itemsData Array of item penalty data tables
-local function getVisionAffectingItems(character, showZeroPenalty)
+local function getVisionAffectingItems(character)
     if not character then return {} end
     
     local itemsData = {}
@@ -126,11 +120,9 @@ local function getVisionAffectingItems(character, showZeroPenalty)
         local wornItem = wornItems:get(i)
         if wornItem then
             local itemData = calculateItemPenalty(wornItem)
-            if itemData then
-                -- Filter out zero/minimal penalties unless showZeroPenalty is true
-                if showZeroPenalty or itemData.penaltyPercent >= MIN_PENALTY_THRESHOLD then
-                    table.insert(itemsData, itemData)
-                end
+            -- Filter out zero/minimal penalties
+            if itemData and itemData.penaltyPercent >= MIN_PENALTY_THRESHOLD then
+                table.insert(itemsData, itemData)
             end
         end
     end
@@ -147,9 +139,9 @@ end
 ---@return string rgbColor RGB color code (red for penalty, green for bonus)
 local function getColorForPenalty(penaltyPercent)
     if penaltyPercent > 0 then
-        return FTE_Utils.Colors.bad   -- Red for penalty (negative effect)
+        return FTE_Utils.Colors.bad
     else
-        return FTE_Utils.Colors.good  -- Green for bonus (positive effect, if any exist)
+        return FTE_Utils.Colors.good
     end
 end
 
@@ -195,36 +187,29 @@ end
 ---Setup the vision-affecting items module
 function FTE_VisionAffectingItems:setupModule()
     FTE_Utils.logInfo("[VisionAffectingItems] Module initialized successfully")
-    -- No patches needed - this module provides data functions only
 end
 
 -- ===================================================================================================== --
 -- PUBLIC MODULE API
 -- ===================================================================================================== --
 
----Get vision-affecting items for a character
+---Get vision-affecting items for a character (sorted by penalty severity)
 ---@param character IsoPlayer The player character
----@param options table|nil Optional configuration {showZeroPenalty: boolean, sortMode: string}
 ---@return table itemsData Sorted array of item penalty data
-function FTE_VisionAffectingItems:getItems(character, options)
+function FTE_VisionAffectingItems:getItems(character)
     if not self:isActive() then return {} end
     
-    options = options or {}
-    local showZeroPenalty = options.showZeroPenalty or false
-    local sortMode = options.sortMode or "severity"
-    
-    local itemsData = getVisionAffectingItems(character, showZeroPenalty)
-    return sortItems(itemsData, sortMode)
+    local itemsData = getVisionAffectingItems(character)
+    return sortItems(itemsData, "severity")
 end
 
 ---Get vision-affecting worn items formatted for tooltip display
 ---@param character IsoPlayer The player character
----@param options table|nil Optional configuration {showZeroPenalty: boolean, sortMode: string}
 ---@return table displayItems Array of formatted display items with text and value
-function FTE_VisionAffectingItems:getFormattedWornItems(character, options)
+function FTE_VisionAffectingItems:getFormattedWornItems(character)
     if not self:isActive() then return {} end
     
-    local itemsData = self:getItems(character, options)
+    local itemsData = self:getItems(character)
     return formatWornItemsForDisplay(itemsData)
 end
 
@@ -241,11 +226,7 @@ function FTE_VisionAffectingItems:getWornItemsForTooltip(character, clothingPena
         return {}
     end
     
-    local options = {
-        showZeroPenalty = false,  -- Only show items with actual penalties
-        sortMode = "severity"     -- Sort by penalty severity (highest first)
-    }
-    return self:getFormattedWornItems(character, options)
+    return self:getFormattedWornItems(character)
 end
 
 ---Get color for penalty value
@@ -293,8 +274,8 @@ return {
     getInstance = function() return instance end,
     
     -- Direct API exports for convenience
-    getItems = function(character, options) return instance:getItems(character, options) end,
-    getFormattedWornItems = function(character, options) return instance:getFormattedWornItems(character, options) end,
+    getItems = function(character) return instance:getItems(character) end,
+    getFormattedWornItems = function(character) return instance:getFormattedWornItems(character) end,
     getWornItemsForTooltip = function(character, clothingPenalty) return instance:getWornItemsForTooltip(character, clothingPenalty) end,
     getColorForPenalty = function(penaltyPercent) return instance:getColorForPenalty(penaltyPercent) end,
     hasVisionAffectingItems = function(character) return instance:hasVisionAffectingItems(character) end
