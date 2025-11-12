@@ -1,11 +1,16 @@
 ﻿# Changelog
 
-## [Unreleased]
+## [2.0.0] - 2025-11-12
 ### Added
-- Optional search radius display before the eye icon (enabled by default, visible during search mode)
- 
+- Vision-affecting worn items display with icons and individual penalties
+- Persistent search radius display next to eye icon (toggleable)
+- Tooltip layout options: right-aligned (default) or left-aligned values
+
 ### Changed
-- Refactored codebase to modular architecture with fault-isolated feature modules
+- Complete modular architecture refactor with fault-isolated modules
+- Fully reworked tooltip layout with cleaner visual hierarchy
+- Simplified mod options from 6 to 2
+- Zero-value bonuses now automatically hidden
 
 ### Removed
 - "Show Min/Max Values" mod option (min/max indicators already shown via color-highlighting in radius display)
