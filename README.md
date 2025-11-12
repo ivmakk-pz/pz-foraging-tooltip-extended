@@ -1,6 +1,6 @@
 ﻿# Foraging Tooltip Extended
 
-![Mod Version](https://img.shields.io/badge/Version-1.1.2-blue)
+![Mod Version](https://img.shields.io/badge/Version-2.0.0-blue)
 [![Steam Workshop](https://img.shields.io/badge/Steam%20Workshop-View-blue)](https://steamcommunity.com/sharedfiles/filedetails/?id=3507997225)
 
 A Project Zomboid mod that enhances the foraging tooltip with detailed modifier breakdowns and customizable display options.

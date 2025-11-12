@@ -1,4 +1,27 @@
-﻿v1.1.2 - 2025-06-28
+﻿v2.0.0 - 2025-11-12
+
+Added
+- Vision-affecting worn items display with icons and individual penalties
+- Persistent search radius display next to eye icon (toggleable)
+- Tooltip layout options: right-aligned (default) or left-aligned values
+
+Changed
+- Complete modular architecture refactor with fault-isolated modules
+- Fully reworked tooltip layout with cleaner visual hierarchy
+- Simplified mod options from 6 to 2
+- Zero-value bonuses now automatically hidden
+
+Removed
+- "Show Min/Max Values" mod option (min/max indicators already shown via color-highlighting in radius display)
+- "Show Items View Distance" mod option and feature (view distance estimates for small/medium/large items)
+- "Show Zero Trait Bonuses" mod option (zero-value trait/profession bonuses now always hidden for cleaner display)
+- "Show Zero Food Detection Bonus" mod option (food detection section now always hidden when hunger bonus is zero)
+
+Fixed
+- Food Detection section now properly hides when bonus is zero and option is disabled
+
+
+v1.1.2 - 2025-06-28
 
 Changed
 - "Show Items View Distance" option is now disabled by default (search radius is more impactful for foraging)

@@ -5,6 +5,6 @@ icon=icon.png
 author=ivmakk
 description=Detailed tooltips for foraging radius calculation and used modifiers.
 tags=Build 42
-modversion=1.1.2
+modversion=2.0.0
 incompatible=\DisplayAllForagingEffects
 versionMin=42.9
