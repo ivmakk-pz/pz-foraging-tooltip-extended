@@ -1,6 +1,13 @@
 ﻿---
 applyTo: 'workshop_description.bbcode'
 ---
+
+## Description Structure Guidelines
+- **ALWAYS** start the description with a plain text paragraph (no headers or BBCode tags)
+- The first ~100 characters are displayed as plain text in Steam's tooltip preview when hovering over the mod
+- This opening paragraph should be a concise, clear summary of what the mod does
+- After the opening paragraph, you can use headers and formatting tags as needed
+
 ## Steam Text Syntax to LLM Instruction Mapping
 
 Source: [https://steamcommunity.com/comment/Guide/formattinghelp](https://steamcommunity.com/comment/Guide/formattinghelp)
@@ -59,6 +66,16 @@ Source: [https://steamcommunity.com/comment/Guide/formattinghelp](https://steamc
 
 ---
 **Note**: Ensure formatting tags are closed properly to prevent rendering issues.
+
+## Character Encoding Guidelines
+- **ALWAYS** use web-safe ASCII symbols in Steam Workshop descriptions
+- Replace special Unicode characters with their ASCII equivalents:
+  - Use straight apostrophe `'` instead of curly apostrophe `'` or `'`
+  - Use straight quotes `"` instead of curly quotes `"` or `"`
+  - Use hyphen `-` instead of em dash `—` or en dash `–`
+  - Use three periods `...` instead of ellipsis `…`
+- These substitutions ensure consistent rendering across all platforms and browsers
+- Steam Workshop may not properly display Unicode characters in all contexts
 
 ## Auto-Generated Content Guidelines
 - **DO NOT** manually add Workshop ID or Mod ID lines to workshop_description.bbcode
