@@ -12,20 +12,33 @@ Execute the git release workflow after completing the release preparation:
    git merge release/[VERSION]
    ```
 
-2. **Create and Push Tag**:
+2. **Check Existing Tag Format** (IMPORTANT):
    ```
-   git tag v[VERSION]
-   git push origin master
-   git push origin v[VERSION]
+   git tag --sort=-version:refname
    ```
+   Review the format of existing tags to ensure consistency. Use the same format (with or without 'v' prefix) as existing tags.
 
-3. **Clean Up Release Branch**:
+3. **Create and Push Tag**:
+   ```
+   git tag [VERSION]
+   git push origin master
+   git push origin [VERSION]
+   ```
+3. **Create and Push Tag**:
+   ```
+   git tag [VERSION]
+   git push origin master
+   git push origin [VERSION]
+   ```
+   Note: Use version format that matches existing tags (e.g., '2.0.0' not 'v2.0.0' if existing tags use no prefix)
+
+4. **Clean Up Release Branch**:
    ```
    git branch -d release/[VERSION]
    git push origin --delete release/[VERSION]
    ```
 
-4. **Verify Completion**:
+5. **Verify Completion**:
    ```
    git status
    git tag --sort=-version:refname
