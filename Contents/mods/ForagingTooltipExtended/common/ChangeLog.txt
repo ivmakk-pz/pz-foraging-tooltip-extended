@@ -70,3 +70,10 @@ Fixed
 - Food Detection section now properly hides when bonus is zero and option is disabled
 
 [ ------ ]
+
+[ v2.1.0 - 2025-12-13 ]
+
+Changed
+- Updated for Build 42.13 compatibility
+
+[ ------ ]

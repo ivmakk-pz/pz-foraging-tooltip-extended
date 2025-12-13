@@ -268,11 +268,11 @@ end
 local function formatCharacterEffectsSection(characterEffects, valueXPos, alignment)
 	local parts = {}
 	
-	-- Filter items that should be displayed
+	-- Filter items that should be displayed (skip all zero-value items)
 	local displayItems = {}
 	for i = 1, #characterEffects do
 		local item = characterEffects[i]
-		if not item.isBonus or item.value ~= 0 then
+		if item.value ~= 0 then
 			table.insert(displayItems, item)
 		end
 	end
