@@ -18,13 +18,13 @@ description=[*] [b]Tooltip Value Alignment:[/b] Choose right or left alignment f
 description=[/list]
 description=
 description=[h2]Why I Made This[/h2]
-description=I've always enjoyed foraging as a reliable source of food and medical herbs since the early days of Project Zomboid. However, Build 42's vanilla tooltip felt confusing — for example, Weather Effect appeared as both a red negative value at the top and a green negative value in the bonuses section. This dual representation made it unclear how modifiers actually interact.
+description=I've always enjoyed foraging as a reliable source of food and medical herbs since the early days of Project Zomboid. However, Build 42's vanilla tooltip felt confusing â€” for example, Weather Effect appeared as both a red negative value at the top and a green negative value in the bonuses section. This dual representation made it unclear how modifiers actually interact.
 description=
 description=I couldn't find any working mods for Build 42 that addressed this, so I created this mod to make foraging mechanics transparent and understandable.
 description=
 description=[h2]Compatibility[/h2]
 description=[list]
-description=[*]Tested on 42.9-42.12.3
+description=[*]Tested on 42.9-42.13.0
 description=[*]Safe to add/remove mid-game
 description=[*]Compatible with most mods unless they modify the "Vision Effectiveness" tooltip.
 description=[*]Recommended with [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3593442524]Quick Forage Icon Discard [B42][/url]
