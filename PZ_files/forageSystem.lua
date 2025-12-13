@@ -1,14 +1,3 @@
---[[---------------------------------------------
--------------------------------------------------
---
--- forageSystem
---
--- eris
---
--------------------------------------------------
---]]---------------------------------------------
-
-
 --[[
 MODDING FAQ:
 
@@ -52,12 +41,10 @@ MODDING FAQ:
 
 
 --if isServer() then return; end;
--------------------------------------------------
--------------------------------------------------
+
 local table = table;
 local math  = math;
--------------------------------------------------
--------------------------------------------------
+
 local function iterList(_list)
 	local list = _list;
 	local size = list:size() - 1;
@@ -78,8 +65,6 @@ local function clamp(_value, _min, _max)
 	if _min > _max then _min, _max = _max, _min; end;
 	return math.min(math.max(_value, _min), _max);
 end
-
---[[--======== forageSystem ========--]]--
 
 forageSystem = {
 	isInitialised		 = false,
@@ -424,6 +409,11 @@ forageSystem = {
 		},
 		["Base.Greenpeas"] = {
 			["type"] = "Base.GreenpeasSeed",
+			["amount"] = 10,
+			["chance"] = 75,
+		},
+		["Base.Hops"] = {
+			["type"] = "Base.HopsSeed",
 			["amount"] = 10,
 			["chance"] = 75,
 		},
@@ -775,17 +765,6 @@ function forageSystem.setOptionValues()
 	forageSystem.itemBlacklist = getSandboxOptions():getOptionByName("LootItemRemovalList"):getSplitCSVList();
 end
 
---[[---------------------------------------------
---
--- zoneData
---
---]]---------------------------------------------
-
---[[--======== createZoneData ========--
-	@param _forageZone
-	@param _zoneDef
-]]--
-
 function forageSystem.createZoneData(_forageZone, _zoneDef)
 	local zoneData = {};
 	--
@@ -850,10 +829,6 @@ function forageSystem.fillZone(_zoneData)
 	_zoneData.lastRefill = forageSystem.getWorldAge();
 end
 
---[[--======== checkRefillZone ========--
-	@param _zoneData
-]]--
-
 function forageSystem.checkRefillZone(_zoneData)
 	--don't refill zones which are active/seen today
 	--local zones = getZones(_zoneData.x, _zoneData.y, 0);
@@ -884,19 +859,10 @@ function forageSystem.checkRefillZone(_zoneData)
 	end;
 end
 
---[[--======== updateZone ========--]]--
-
 function forageSystem.updateZone(_zoneData)
 	_zoneData.lastAction = forageSystem.getWorldAge();
 	forageClient.updateZone(_zoneData);
 end
-
---[[--======== takeItem ========--
-	@param _zoneData
-	@param _number - (optional) number of items to take
-
-	Returns number of forages remaining
-]]--
 
 function forageSystem.takeItem(_zoneData, _number)
 	local number = _number or 1;
@@ -908,12 +874,6 @@ end
 function forageSystem.getWorldAge()
 	return getGameTime():getWorldAgeHours();
 end
-
---[[--======== statisticsDebug ========--
-	Gathers and stores item spawn statistics for every loot table
-
-	For debugging and balancing loot rates.
---]]--
 
 --[[
 function forageSystem.statisticsDebug(_createDebugLog, _doItemStats)
@@ -974,12 +934,6 @@ function forageSystem.createDebugLog(_doItemStats)
 	fileWriterObj:close();
 end
 --]]--
-
---[[--======== createForageIcons ========--
-	@param _zoneData
-	@param _recreate
-	@param _count - number of items to create
-]]--
 
 function forageSystem.createForageIcons(_zoneData, _recreate, _count)
 	local maxIconsPerZone = forageSystem.maxIconsPerZone;
@@ -1120,8 +1074,6 @@ function forageSystem.debugRefreshZone(_zoneData)
 	forageSystem.updateTimeValues();
 end
 
---[[--======== getZoneData ========--]]--
-
 function forageSystem.getZoneData(_forageZone, _zoneDef, _x, _y)
 	if not _forageZone then return nil; end;
 	if _forageZone:getType() == "ForageZone" then
@@ -1148,12 +1100,6 @@ function forageSystem.getZoneData(_forageZone, _zoneDef, _x, _y)
 	log(DebugType.Foraging, "[forageSystem][getZoneData] zoneData not found, removing ".. _forageZone:getType());
 	return nil;
 end
-
---[[---------------------------------------------
---
--- lootTable
---
---]]---------------------------------------------
 
 function forageSystem.getCurrentLootEntries(_zoneName)
 	local zoneName = _zoneName;
@@ -1311,47 +1257,6 @@ function forageSystem.generateLootTable()
 	forageSystem.lootTable = lootTable;
 end
 
---[[---------------------------------------------
---
--- itemDefs
---
---]]---------------------------------------------
-
---[[--======== addItemDef ========--
-	@param _itemDef
-
-	Adds a definition to forageSystem.itemDefs
-
-	example:
-
-	an apple
-	only in Forest zone
-	chance is 1
-	only available in July
-	only in the ForestGoods category
-	granting 10 xp
-
-	(All missing definition info will be filled in automatically!)
-	(See forageSystem.defaultDefinitions.defaultItemDef for the possible values)
-
-	local appleDef = {
-		type = "Base.Apple",
-        zones = {
-            Forest      = 1,
-        },
-        categories = { "ForestGoods" },
-		months = { 7, },
-		xp = 10,
-	};
-
-	forageSystem.addItemDef(appleDef);
-
-	if the definition exists, it will overwrite the existing one.
-	only one definition may exist per item.
-
-	To modify a definition: see forageSystem.modifyItemDef
-]]--
-
 function forageSystem.addItemDef(_itemDef)
 	if not (_itemDef and _itemDef.type) then return; end;
 	local itemDef = _itemDef;
@@ -1426,26 +1331,6 @@ function forageSystem.addItemDef(_itemDef)
 	return itemDef.type, false; -- _itemDef.type could not be added
 end
 
---[[--======== removeItemDef ========--
-	@param _itemDef
-
-	Removes a definition from forageSystem.itemDefs (matching _itemDef.type)
-
-	example:
-
-	to remove the definition for Base.Apple - this is all that is strictly required.
-
-	forageSystem.removeItemDef({type = "Base.Apple"})
-
-	an existing itemDef may be passed to this function too.
-
-	example:
-
-	local appleDef = forageSystem.itemDefs["Base.Apple"];
-
-	forageSystem.removeItemDef(appleDef);
-]]--
-
 function forageSystem.removeItemDef(_itemDef)
 	if _itemDef and forageSystem.isItemExist(nil, _itemDef) then
 		forageSystem.itemDefs[_itemDef.type] = nil; --wipe the definition
@@ -1457,30 +1342,6 @@ function forageSystem.removeItemDef(_itemDef)
 		log(DebugType.Foraging, "[forageSystem][removeItemDef] no such item, ignoring "..((_itemDef and _itemDef.type) or "unknown type"));
 	end;
 end
-
---[[--======== modifyItemDef ========--
-	@param _itemDef
-
-	Removes a definition from forageSystem.itemDefs and replaces it with _itemDef.
-
-	example:
-
-	local appleDef = {
-		type = "Base.Apple",
-        zones = {
-            Forest      = 10,
-        },
-        categories = { "ForestGoods", "Junk" },
-		months = { 7, 8, 9 },
-		xp = 1000,
-	};
-
-	forageSystem.modifyItemDef(appleDef);
-
-	this can also be done with forageSystem.addItemDef
-	both functions are provided for convenience
-	if the itemDef does not exist, it will not be added via this function.
-]]--
 
 function forageSystem.modifyItemDef(_itemDef)
 	if _itemDef and forageSystem.itemDefs[_itemDef.type] and forageSystem.isItemExist(nil, _itemDef) then
@@ -1513,28 +1374,11 @@ function forageSystem.populateScavengeDefs()
 	end;
 end
 
---[[--======== populateItemDefs ========--
-	@param _itemDefs - (optional) a table of itemsDefs to add
-
-	The main function for bulk adding definitions.
-	A table full of itemDefs may be added via this function. See forageSystem.forageDefinitions for how to structure bulk tables.
-]]--
-
 function forageSystem.populateItemDefs(_itemDefs)
 	for _, def in pairs(_itemDefs or forageSystem.forageDefinitions) do
 		forageSystem.addItemDef(def);
 	end;
 end
-
---[[---------------------------------------------
---]]---------------------------------------------
-
---[[--======== createForageZone ========--
-	@param _x, _y - coordinates for zone
-	@param _definedZone - (optional) IsoZone - use this defZone instead
-
-	Create a scavenge zone at x/y, optionally sets number of forages remaining
-]]--
 
 function forageSystem.createForageZone(_x, _y, _defZone)
 	local zoneDef, defZone;
@@ -1609,14 +1453,6 @@ function forageSystem.getDefinedZoneAt(_x, _y)
 	return false, false;
 end
 
---[[--======== getRefillBonus ========--
-	@param _value - (optional) alternate value
-
-	Returns refill bonus value for sandbox setting specified in zoneDef.
-
-	Must be a sandbox setting, see SandboxVars for possible options.
-]]--
-
 function forageSystem.getRefillBonus(_zoneData)
 	local zoneDef = forageSystem.zoneDefs[_zoneData.name];
 	if not zoneDef then
@@ -1640,8 +1476,6 @@ function forageSystem.getRefillBonus(_zoneData)
 	return 1 + (forageSystem.abundanceSettings[abundanceSetting][SandboxVars[abundanceSetting]] / 100) or 0;
 end
 
---[[--======== importDef ========--]]--
-
 function forageSystem.importDef(_def, _defaultDef)
 	for key, value in pairs(_defaultDef) do
 		if _def[key] == nil then _def[key] = value; end;
@@ -1649,19 +1483,13 @@ function forageSystem.importDef(_def, _defaultDef)
 	return _def;
 end
 
---[[--======== getZoneDefByType ========--]]--
-
 function forageSystem.getZoneDefByType(_zoneName)
 	return forageSystem.zoneDefs[_zoneName];
 end
 
---[[--======== getZoneDef ========--]]--
-
 function forageSystem.getZoneDef(_definedZone)
 	return forageSystem.zoneDefs[_definedZone:getType()];
 end
-
---[[--======== addZoneDef ========--]]--
 
 function forageSystem.addZoneDef(_zoneDef, _overwrite)
 	local zoneDef = forageSystem.importDef(_zoneDef, forageSystem.defaultDefinitions.defaultZoneDef);
@@ -1680,12 +1508,6 @@ function forageSystem.addZoneDef(_zoneDef, _overwrite)
 	forageSystem.zoneDefs[zoneName] = zoneDef;
 end
 
---[[--======== populateZoneDefs ========--
-	@param _zoneDefs - (optional) add zoneDefs from a provided table
-
-	Initialises the zone list
-]]--
-
 function forageSystem.populateZoneDefs(_zoneDefs)
 	log(DebugType.Foraging, "[forageSystem][populateZoneDefs] Begin adding zoneDefs");
 	for _, def in pairs(_zoneDefs or forageSystem.zoneDefinitions) do
@@ -1694,12 +1516,6 @@ function forageSystem.populateZoneDefs(_zoneDefs)
 	end;
 	log(DebugType.Foraging, "[forageSystem][populateZoneDefs] Finished adding zoneDefs");
 end;
-
---[[--======== populateMixedZoneCategories ========--
-	Adds mixed zone definitions to the category definition tables
-
-	This is used for mixed biomes, such as BirchMixForest, where loot can be from from multiple tables.
-]]--
 
 function forageSystem.populateMixedZoneCategories()
 	local zoneDefs = forageSystem.zoneDefs;
@@ -1723,47 +1539,6 @@ function forageSystem.populateMixedZoneCategories()
 	end;
 	log(DebugType.Foraging, "[forageSystem][populateMixedZoneCategories] Finished populating mixed category tables");
 end;
-
---[[--======== addCatDef ========--
-	@param _catDef
-	@param _overwrite - (optional) forces overwrite if definition exists
-
-	Adds a category definition to forageSystem.catDefs, optionally overwrites existing definition
-
-	example:
-
-	local animalDef = {
-		name                    = "Animals",
-		typeCategory            = "Animals",
-		identifyCategoryPerk    = "PlantScavenging",
-		identifyCategoryLevel   = 5,
-		categoryHidden          = false,
-		validFloors             = { "ANY" },
-		zones              		= {
-			BirchForest  	= 15,
-			DeepForest      = 15,
-			FarmLand        = 20,
-			ForagingNav     = 3,
-			Forest          = 15,
-			OrganicForest  	= 15,
-			PHForest     	= 15,
-			PRForest     	= 15,
-			TownZone        = 5,
-			TrailerPark     = 5,
-			Vegitation      = 25,
-		},
-		spriteAffinities        = forageSystem.spriteAffinities.genericPlants,
-		chanceToMoveIcon        = 3.0,
-		chanceToCreateIcon      = 0.1,
-		focusChanceMin			= 5.0,
-		focusChanceMax			= 15.0,
-	};
-
-
-	forageSystem.addCatDef(animalDef, true);
-
-	this would add a category for "Animals" to the category definitions, overwriting it if already existing.
-]]--
 
 function forageSystem.addCatDef(_catDef, _overwrite)
 	local catDef = forageSystem.importDef(_catDef, forageSystem.defaultDefinitions.defaultCatDef);
@@ -1789,24 +1564,11 @@ function forageSystem.addCatDef(_catDef, _overwrite)
 	forageSystem.catDefs[categoryName] = catDef;
 end
 
---[[--======== populateCatDefs ========--
-	@param _catDefs - (optional) use a provided table to add categories
-
-	This function serves as a bulk-adder helper.
-]]--
-
 function forageSystem.populateCatDefs(_catDefs)
 	for _, def in pairs(_catDefs or forageSystem.categoryDefinitions) do
 		forageSystem.addCatDef(def);
 	end;
 end
-
---[[--======== addSkillDef ========--
-	@param _skillDef
-	@param _overwrite - (optional) force overwrite if definition exists
-
-	Adds skill definition to global table, optionally overwrites existing definition
-]]--
 
 function forageSystem.addSkillDef(_skillDef, _overwrite)
 	local def = forageSystem.importDef(_skillDef, forageSystem.defaultDefinitions.defaultSkillDef);
@@ -1827,28 +1589,11 @@ function forageSystem.addSkillDef(_skillDef, _overwrite)
 	forageSystem.skillDefs[skillType][skillName] = def;
 end
 
---[[--======== populateSkillDefs ========--
-	@param _skillDefs - (optional) override default table (forageSkills) with a new table
-
-	This function serves as a bulk-adder helper.
-]]--
-
 function forageSystem.populateSkillDefs(_skillDefs)
 	for _, def in pairs(_skillDefs or forageSystem.forageSkillDefinitions) do
 		forageSystem.addSkillDef(def);
 	end;
 end
-
---[[---------------------------------------------
---
--- Items
---
---]]---------------------------------------------
-
-
---[[--======== getItemDefSize ========--
-	@param _itemDef
-]]--
 
 function forageSystem.getItemDefSize(_itemDef)
 	local itemObj = ScriptManager.instance:FindItem(_itemDef.type);
@@ -1863,44 +1608,36 @@ function forageSystem.getItemDefSize(_itemDef)
 	return itemSize;
 end
 
---[[--======== addOrDropItems ========--
-	@param _character - IsoPlayer
-	@param _inventory - inventory used
-	@param _items - ArrayList of items to add
-]]--
-
-function forageSystem.addOrDropItems(_character, _inventory, _items, _discardItems)
+function forageSystem.addOrDropItems(_character, _inventory, _items)
 	local inv = _inventory;
 	local plInv = _character:getInventory();
-	if (not _discardItems) then
-		for item in iterList(_items) do
-			inv:AddItem(item);
-			sendAddItemToContainer(inv, item);
-			if (inv:getCapacityWeight() > inv:getEffectiveCapacity(_character)) then
-				inv:Remove(item);
-				sendRemoveItemFromContainer(inv, item);
-				if inv == plInv then
-					_character:getCurrentSquare():AddWorldInventoryItem(item, 0.0, 0.0, 0.0);
-				else
-					plInv:AddItem(item);
-					sendAddItemToContainer(plInv, item);
-				end;
-			end;
-			if (plInv:getCapacityWeight() > plInv:getEffectiveCapacity(_character)) then
-				_character:getCurrentSquare():AddWorldInventoryItem(item, 0.0, 0.0, 0.0);
-				inv:Remove(item);
-				sendRemoveItemFromContainer(inv, item);
-			end;
-			triggerEvent("OnContainerUpdate");
-		end;
-	end
+    for item in iterList(_items) do
+        inv:AddItem(item);
+        sendAddItemToContainer(inv, item);
+        if (inv:getCapacityWeight() > inv:getEffectiveCapacity(_character)) then
+            inv:Remove(item);
+            sendRemoveItemFromContainer(inv, item);
+            if inv == plInv then
+                _character:getCurrentSquare():AddWorldInventoryItem(item, 0.0, 0.0, 0.0);
+            else
+                plInv:AddItem(item);
+                sendAddItemToContainer(plInv, item);
+            end;
+        end;
+        if (plInv:getCapacityWeight() > plInv:getEffectiveCapacity(_character)) then
+            _character:getCurrentSquare():AddWorldInventoryItem(item, 0.0, 0.0, 0.0);
+            inv:Remove(item);
+            sendRemoveItemFromContainer(inv, item);
+        end;
+        triggerEvent("OnContainerUpdate");
+    end;
 	return _items;
 end
 
 function forageSystem.isValidFloor(_square, _itemDef, _catDef)
 	if not _square then return false; end;
 	if not _square:getFloor() then return false; end;
-	if _square:Is(IsoFlagType.water) then return (_itemDef.isOnWater or _itemDef.forceOnWater); end;
+	if _square:has(IsoFlagType.water) then return (_itemDef.isOnWater or _itemDef.forceOnWater); end;
 	local floorTexture = _square:getFloor():getTextureName();
 	if floorTexture then
 		for _, floorType in ipairs(_catDef.validFloors) do
@@ -1913,11 +1650,11 @@ end
 
 function forageSystem.isValidSquare(_square, _itemDef, _catDef)
 	if (not _square) then return false; end;
-	if _square:Is(IsoFlagType.solid) then return false; end;
-	if _square:Is(IsoFlagType.solidtrans) then return false; end;
+	if _square:has(IsoFlagType.solid) then return false; end;
+	if _square:has(IsoFlagType.solidtrans) then return false; end;
 	if (not _square:isNotBlocked(false)) then return false; end;
-	if _itemDef.forceOutside and (not _square:Is(IsoFlagType.exterior)) then return false; end;
-	if _itemDef.forceOnWater and not (_square:Is(IsoFlagType.water)) then return false; end;
+	if _itemDef.forceOutside and (not _square:has(IsoFlagType.exterior)) then return false; end;
+	if _itemDef.forceOnWater and not (_square:has(IsoFlagType.water)) then return false; end;
 	if _square:HasTree() and (not _itemDef.canBeOnTreeSquare) then return false; end;
 	if _catDef.validFunc then
 		_catDef.validFunc(_square, _itemDef, _catDef);
@@ -1927,26 +1664,19 @@ function forageSystem.isValidSquare(_square, _itemDef, _catDef)
 	return false;
 end
 
---[[---------------------------------------------
---
---	Vision Radius
---
---]]---------------------------------------------
-
---[[--======== getCategoryBonus ========--]]--
-
 function forageSystem.getCategoryBonus(_character, _catDef)
 	if not (_catDef and _catDef.name) then return 1.0; end;
 	local categoryName = _catDef.name;
 	local specBonus = 0;
-	local professionDef = forageSystem.skillDefs.occupation[_character:getDescriptor():getProfession()];
+	local professionDef = forageSystem.skillDefs.occupation[_character:getDescriptor():getCharacterProfession():getName()];
 	if professionDef then
 		if forageSystem.isValidSkillDefEffect(_character, professionDef, "specialisations") then
 			specBonus = specBonus + (professionDef.specialisations[categoryName] or 0);
 		end;
 	end;
 	for trait, traitDef in pairs(forageSystem.skillDefs.trait) do
-		if _character:HasTrait(trait) then
+	    local characterTrait = CharacterTrait.get(ResourceLocation.of(trait));
+		if _character:hasTrait(characterTrait) then
 			if forageSystem.isValidSkillDefEffect(_character, traitDef, "specialisations") then
 				specBonus = specBonus + (traitDef.specialisations[categoryName] or 0);
 			end;
@@ -1955,15 +1685,9 @@ function forageSystem.getCategoryBonus(_character, _catDef)
 	return 1 + (specBonus / 100);
 end
 
---[[--======== getLevelVisionBonus ========--]]--
-
 function forageSystem.getLevelVisionBonus(_perkLevel)
 	return (_perkLevel * forageSystem.levelBonus);
 end
-
---[[--======== getAimVisionBonus ========--
-	@param _character - IsoPlayer
-]]--
 
 function forageSystem.getAimVisionBonus(_character)
 	if _character then
@@ -1974,10 +1698,6 @@ function forageSystem.getAimVisionBonus(_character)
 	return 1.0;
 end
 
---[[--======== getSneakVisionBonus ========--
-	@param _character - IsoPlayer
-]]--
-
 function forageSystem.getSneakVisionBonus(_character)
 	if _character then
 		--aim takes priority over crouching
@@ -1987,10 +1707,6 @@ function forageSystem.getSneakVisionBonus(_character)
 	end;
 	return 1.0;
 end
-
---[[--======== getMovementVisionPenalty ========--
-	@param _character - IsoPlayer
-]]--
 
 function forageSystem.getMovementVisionPenalty(_character)
 	local movementPenalty = 0;
@@ -2004,61 +1720,33 @@ function forageSystem.getMovementVisionPenalty(_character)
 	return 1 - movementPenalty;
 end
 
---[[--======== getHungerBonus ========--
-	@param _character - IsoPlayer
-
-	Returns bonus to spot food items when hungry as float 1 - (0-hungerBonusMax)
-]]--
-
 function forageSystem.getHungerBonus(_character, _itemDef)
 	if not (_itemDef and _itemDef.type) then return 1; end;
 	local hungerBonus = 0;
 	if getItem(_itemDef.type) and isItemFood(_itemDef.type) then
-		local hungerLevel = _character:getStats():getHunger();
+		local hungerLevel = _character:getStats():get(CharacterStat.HUNGER);
 		hungerBonus = (forageSystem.hungerBonusMax * hungerLevel) / 100;
 	end;
 	return 1 + hungerBonus;
 end
 
---[[--======== getItemSizePenalty ========--
-	@param _itemSize - item weight
-]]--
-
 function forageSystem.getItemSizePenalty(_itemSize)
 	return math.log(clamp(_itemSize, 0.1, 10)) + forageSystem.minimumSizeBonus;
 end
-
---[[--======== getDifficultyPenalty ========--
-	@param _perkLevel
-
-	Returns penalty for an item (based on skill) as float 1 - 0
-]]--
 
 function forageSystem.getDifficultyPenalty(_perkLevel)
 	return (_perkLevel + 1) / 10;
 end
 
---[[--======== getBodyPenalty ========--
-	@param _character - IsoPlayer
-
-	Returns penalty for body conditions as float 1 - (0-bodyPenaltyMax)
-]]--
-
 function forageSystem.getBodyPenalty(_character)
-	local sickLevel = _character:getStats():getSickness();
-	local painLevel = _character:getStats():getPain() / 100;
-	local foodSickLevel = _character:getBodyDamage():getFoodSicknessLevel() / 100;
-	local drunkLevel = _character:getStats():getDrunkenness() / 100;
+	local sickLevel = _character:getStats():get(CharacterStat.SICKNESS);
+	local painLevel = _character:getStats():get(CharacterStat.PAIN) / 100;
+	local foodSickLevel = _character:getStats():get(CharacterStat.FOOD_SICKNESS) / 100;
+	local drunkLevel = _character:getStats():get(CharacterStat.INTOXICATION) / 100;
 	--
 	local bodyPenalty = math.max(painLevel, sickLevel, foodSickLevel, drunkLevel);
 	return clamp(1 - bodyPenalty, 1 - (forageSystem.bodyPenaltyMax / 100), 1);
 end
-
---[[--======== getClothingPenalty ========--
-	@param _character - IsoPlayer
-
-	Returns penalty for clothing as float 1 - (0-clothingPenaltyMax)
-]]--
 
 function forageSystem.getClothingPenalty(_character)
 	local clothingPenalty = 0;
@@ -2071,51 +1759,33 @@ function forageSystem.getClothingPenalty(_character)
 	return clamp(1 - (clothingPenalty / 100), 1 - (forageSystem.clothingPenaltyMax / 100), 1);
 end
 
---[[--======== getPanicPenalty ========--
-	@param _character - IsoPlayer
-
-	Returns penalty for panic conditions as float 1 - (0-panicPenaltyMax)
-]]--
-
 function forageSystem.getPanicPenalty(_character)
-	local panicLevel = _character:getStats():getPanic() / 100;
-	local fearLevel = _character:getStats():getFear();
-	local stressLevel = _character:getStats():getStress();
-	--
-	local panicPenalty = math.max(panicLevel, fearLevel, stressLevel);
-	return clamp(1 - panicPenalty, 1 - (forageSystem.panicPenaltyMax / 100), 1);
+    local panicLevel = _character:getStats():get(CharacterStat.PANIC) / 100;
+    local stressLevel = _character:getStats():get(CharacterStat.STRESS);
+
+    -- Use the higher of panic or stress
+    local panicPenalty = math.max(panicLevel, stressLevel);
+    return clamp(1 - panicPenalty, 1 - (forageSystem.panicPenaltyMax / 100), 1);
 end
 
---[[--======== getExhaustionPenalty ========--
-	@param _character - IsoPlayer
-
-	Returns penalty for exhaustion conditions as float 1 - (0-exhaustionPenaltyMax)
-]]--
-
 function forageSystem.getExhaustionPenalty(_character)
-	local enduranceLevel = 1 - _character:getStats():getEndurance();
-	local fatigueLevel = _character:getStats():getFatigue();
-	--
+	local enduranceLevel = 1 - _character:getStats():get(CharacterStat.ENDURANCE);
+	local fatigueLevel = _character:getStats():get(CharacterStat.FATIGUE);
 	local exhaustionPenalty = math.max(enduranceLevel + fatigueLevel);
 	return clamp(1 - exhaustionPenalty, 1 - (forageSystem.exhaustionPenaltyMax / 100), 1);
 end
 
---[[--======== getWeatherEffectReduction ========--
-	@param _character - IsoPlayer
-
-	Returns weather effect total reduction for character as percent
-]]--
-
 function forageSystem.getWeatherEffectReduction(_character)
 	local effectReduction = 0;
-	local professionDef = forageSystem.skillDefs.occupation[_character:getDescriptor():getProfession()];
+	local professionDef = forageSystem.skillDefs.occupation[_character:getDescriptor():getCharacterProfession():getName()];
 	if professionDef then
 		if forageSystem.isValidSkillDefEffect(_character, professionDef, "weatherEffect") then
 			effectReduction = effectReduction + professionDef.weatherEffect;
 		end;
 	end;
 	for trait, traitDef in pairs(forageSystem.skillDefs.trait) do
-		if _character:HasTrait(trait) then
+        local characterTrait = CharacterTrait.get(ResourceLocation.of(trait));
+		if _character:hasTrait(characterTrait) then
 			if forageSystem.isValidSkillDefEffect(_character, traitDef, "weatherEffect") then
 				effectReduction = effectReduction + traitDef.weatherEffect;
 			end;
@@ -2124,13 +1794,6 @@ function forageSystem.getWeatherEffectReduction(_character)
 	effectReduction = clamp(effectReduction / 100, 0, forageSystem.effectReductionMax / 100);
 	return 1 - effectReduction;
 end
-
---[[--======== getWeatherPenalty ========--
-	@param _character - IsoPlayer
-	@param _square - IsoGridSquare
-
-	Returns penalty for weather conditions as float 1 - (0-weatherPenaltyMax)
-]]--
 
 function forageSystem.getWeatherPenalty(_character, _square)
 	if not (_character and _square) then return 1; end;
@@ -2161,22 +1824,17 @@ function forageSystem.getWeatherPenalty(_character, _square)
 	return 1 - (weatherPenalty * effectReduction);
 end
 
---[[--======== getDarknessEffectReduction ========--
-	@param _character - IsoPlayer
-
-	Returns darkness effect total reduction for character as percent
-]]--
-
 function forageSystem.getDarknessEffectReduction(_character)
 	local effectReduction = 0;
-	local professionDef = forageSystem.skillDefs.occupation[_character:getDescriptor():getProfession()];
+	local professionDef = forageSystem.skillDefs.occupation[_character:getDescriptor():getCharacterProfession()];
 	if professionDef then
 		if forageSystem.isValidSkillDefEffect(_character, professionDef, "darknessEffect") then
 			effectReduction = effectReduction + professionDef.darknessEffect;
 		end;
 	end;
 	for trait, traitDef in pairs(forageSystem.skillDefs.trait) do
-		if _character:HasTrait(trait) then
+	    local characterTrait = CharacterTrait.get(ResourceLocation.of(trait));
+		if _character:hasTrait(characterTrait) then
 			if forageSystem.isValidSkillDefEffect(_character, traitDef, "darknessEffect") then
 				effectReduction = effectReduction + traitDef.darknessEffect;
 			end;
@@ -2185,13 +1843,6 @@ function forageSystem.getDarknessEffectReduction(_character)
 	effectReduction = clamp(effectReduction / 100, 0, forageSystem.effectReductionMax / 100);
 	return 1 - effectReduction;
 end
-
---[[--======== getLightLevelPenalty ========--
-	@param _character - IsoPlayer
-	@param _square - IsoGridSquare
-
-	Returns penalty for IsoGridSquare as float (0 to 1)
-]]--
 
 function forageSystem.getLightLevelPenalty(_character, _square, _doReduction)
 	if not (_square and _character) then return 0; end;
@@ -2212,14 +1863,8 @@ function forageSystem.getLightLevelPenalty(_character, _square, _doReduction)
 	return clamp(1 - lightPenalty, 1 - (forageSystem.lightPenaltyMax / 100), 1);
 end
 
---[[--======== getProfessionVisionBonus ========--
-	@param _character - IsoPlayer
-
-	Returns profession bonus vision in squares
-]]--
-
 function forageSystem.getProfessionVisionBonus(_character)
-	local professionDef = forageSystem.skillDefs.occupation[_character:getDescriptor():getProfession()];
+	local professionDef = forageSystem.skillDefs.occupation[_character:getDescriptor():getCharacterProfession():getName()];
 	if professionDef then
 		if forageSystem.isValidSkillDefEffect(_character, professionDef, "visionBonus") then
 			return professionDef.visionBonus;
@@ -2228,16 +1873,11 @@ function forageSystem.getProfessionVisionBonus(_character)
 	return 0;
 end
 
---[[--======== getTraitVisionBonus ========--
-	@param _character - IsoPlayer
-
-	Returns trait bonus vision total in squares
-]]--
-
 function forageSystem.getTraitVisionBonus(_character)
 	local traitBonus = 0;
 	for trait, traitDef in pairs(forageSystem.skillDefs.trait) do
-		if _character:HasTrait(trait) then
+	    local characterTrait = CharacterTrait.get(ResourceLocation.of(trait));
+		if _character:hasTrait(characterTrait) then
 			if forageSystem.isValidSkillDefEffect(_character, traitDef, "visionBonus") then
 				traitBonus = traitBonus + traitDef.visionBonus;
 			end;
@@ -2246,14 +1886,6 @@ function forageSystem.getTraitVisionBonus(_character)
 	return traitBonus;
 end
 
---[[--======== isValidSkillDefEffect ========--
-	@param _character - IsoPlayer
-	@param _skillDef
-	@param _bonusEffect
-
-	Tests if skillDef effect should be applied (using skillDef.testFunc)
-]]--
-
 function forageSystem.isValidSkillDefEffect(_character, _skillDef, _bonusEffect)
 	for _, testFunc in ipairs(_skillDef.testFuncs) do
 		if not testFunc(_character, _skillDef, _bonusEffect) then return false; end;
@@ -2261,19 +1893,10 @@ function forageSystem.isValidSkillDefEffect(_character, _skillDef, _bonusEffect)
 	return true;
 end
 
---[[--======== getMonthMulti ========--
-	@param _itemDef
-	@param _month - (optional) month to check
-
-	Returns month bonus total for itemDef as percent
-]]--
-
 function forageSystem.getMonthMulti(_itemDef, _month)
 	if not _itemDef then return 0; end;
 	return _itemDef.validMonths[_month or (getGameTime():getMonth() + 1)] or 0;
 end
-
---[[--======== getTimeOfDay ========--]]--
 
 function forageSystem.getTimeOfDay()
 	local season = getClimateManager():getSeason();
@@ -2283,13 +1906,6 @@ function forageSystem.getTimeOfDay()
 	if (timeOfDay < dawn) or (timeOfDay > dusk) then return "isNight"; end;
 	return "isDay";
 end
-
---[[--======== getTimeOfDayBonus ========--
-	@param _def - itemDef or catDef
-	@param _isDay - true/false (optional) get result for time of day
-
-	Returns time of day bonus total in percent for itemDef
-]]--
 
 function forageSystem.getTimeOfDayBonus(_def, _isDay)
 	if (not _def) then return 1; end;
@@ -2305,8 +1921,6 @@ function forageSystem.getTimeOfDayBonus(_def, _isDay)
 		return (100 + _def.nightChance) / 100;
 	end;
 end
-
---[[--======== getWeatherType ========--]]--
 
 function forageSystem.getWeatherType()
 	local precipitationIntensity = getClimateManager():getPrecipitationIntensity();
@@ -2324,12 +1938,6 @@ function forageSystem.getWeatherType()
 	end;
 	return "isNormal";
 end
-
---[[--======== getWeatherBonus ========--
-	@param _def
-
-	Returns weather bonus total in percent for itemDef or catDef
-]]--
 
 function forageSystem.getWeatherBonus(_def, _isRaining, _isSnowing, _hasRained)
 	if not _def then return 1; end;
@@ -2351,13 +1959,6 @@ function forageSystem.getWeatherMulti(_def, _rainAmount, _puddleAmount, _snowAmo
 	return (100 + rainChance + hasRainedChance + snowChance) / 100;
 end
 
---[[--======== hasRequiredItems ========--
-	@param _character - IsoPlayer
-	@param _itemDef
-
-	Returns true if all items in itemDef are in inventory (matching by tag)
-]]--
-
 function forageSystem.hasRequiredItems(_character, _itemDef)
 	local itemTest = function(_item, _tag)
 		return not _item:isBroken() and _item:hasTag(_tag);
@@ -2372,29 +1973,16 @@ function forageSystem.hasRequiredItems(_character, _itemDef)
 	return #_itemDef.itemTags == requiredItems;
 end
 
---[[--======== hasNeededTraits ========--
-	@param _character - IsoPlayer
-	@param _itemDef
-
-	Returns true if all traits in itemDef are known
-]]--
-
 function forageSystem.hasNeededTraits(_character, _itemDef)
 	local knownTraits = 0;
 	for _, trait in ipairs(_itemDef.traits) do
-		if _character:HasTrait(trait) then
+        local characterTrait = CharacterTrait.get(ResourceLocation.of(trait));
+		if _character:hasTrait(characterTrait) then
 			knownTraits = knownTraits + 1;
 		end;
 	end;
 	return #_itemDef.traits == knownTraits;
 end
-
---[[--======== hasNeededRecipes ========--
-	@param _character - IsoPlayer
-	@param _itemDef
-
-	Returns true if all recipes in itemDef are known
-]]--
 
 function forageSystem.hasNeededRecipes(_character, _itemDef)
 	local knownRecipes = 0;
@@ -2405,13 +1993,6 @@ function forageSystem.hasNeededRecipes(_character, _itemDef)
 	end;
 	return #_itemDef.recipes == knownRecipes;
 end
-
---[[--======== getPerkLevel ========--
-	@param _character - IsoPlayer
-	@param _itemDef
-
-	Returns perk level / number of perks
-]]--
 
 function forageSystem.getPerkLevel(_character, _itemDef)
 	local perkLevel = 0;
@@ -2424,45 +2005,18 @@ function forageSystem.getPerkLevel(_character, _itemDef)
 	return perkLevel;
 end
 
---[[--======== isItemTypeExist ========--
-@param _itemDef
-
-Returns true if an item type exists
-]]--
-
 function forageSystem.isItemTypeExist(_itemType)
 	return (_itemType and ScriptManager.instance:FindItem(_itemType) and true) or false;
 end;
-
---[[--======== hasNeededPerks ========--
-@param _character - IsoPlayer
-@param _itemDef
-
-Returns true if player is sufficient level for all perk requirements
-]]--
 
 function forageSystem.hasNeededPerks(_character, _itemDef, _zoneDef)
 	return (_itemDef and _itemDef.skill <= forageSystem.getPerkLevel(_character, _itemDef)) or false;
 end
 
---[[--======== isItemExist ========--
-	@param _itemDef
-	@param _zoneDef - zoneDef
-
-	Returns true if an item type exists
-]]--
-
 function forageSystem.isItemExist(_character, _itemDef, _zoneDef)
 	local itemObj = (_itemDef and _itemDef.type) and ScriptManager.instance:FindItem(_itemDef.type);
 	return (itemObj and (not itemObj:getObsolete()) and true) or false;
 end
-
---[[--======== isItemScriptValid ========--
-	@param _itemDef
-	@param _zoneDef - zoneDef
-
-	Returns true if an item script is valid for use as an item definition
-]]--
 
 function forageSystem.isItemScriptValid(_character, _itemDef, _zoneDef)
 	local isValid = false;
@@ -2531,12 +2085,6 @@ function forageSystem.setScriptItemFocusCategories(_itemDef, _scriptItem)
 	end;
 end
 
---[[--======== isForageable ========--
-	@param _character - IsoPlayer
-	@param _zoneDef - zoneDef
-	@param _itemDef
-]]--
-
 function forageSystem.isForageable(_character, _itemDef, _zoneDef)
 	for _, testFunc in ipairs(forageSystem.isForageableFuncs) do
 		if type(testFunc) == "function" then
@@ -2559,11 +2107,6 @@ function forageSystem.isForageable(_character, _itemDef, _zoneDef)
 	return true;
 end
 
---[[--======== addForageDef ========--
-	@param _itemType - item type, without "Module."
-	@param _forageDef - forageDef is an unprocessed itemDef.
-]]--
-
 function forageSystem.addForageDef(_itemType, _forageDef)
 	if not _forageDef then return; end;
 	if not _itemType then
@@ -2577,69 +2120,52 @@ function forageSystem.addForageDef(_itemType, _forageDef)
 	end;
 end
 
---[[---------------------------------------------
---
---	Character
---
---]]---------------------------------------------
-
---[[--======== giveItemXP ========--
-	@param _character - IsoPlayer
-	@param _itemDef
-	@param _amount - (optional) override amount of xp by a percent (float 0-1)
-
-	Awards the _character an (_amount) of the _itemDef defined xp value
-]]--
-
-function forageSystem.itemFound(_character, _itemType, _amount)
-    local _itemDef = forageSystem.itemDefs[_itemType];
-	forageSystem.giveItemXP(_character, _itemDef, _amount);
-end
-
-function forageSystem.giveItemXP(_character, _itemDef, _amount)
-	local pfPerk, currentXP;
-	--
-	local xpAmount              = _itemDef.xp * (_amount or 1);
-	local globalXPModifier      = forageSystem.globalXPModifier / 100;
-	local levelXPModifier       = forageSystem.levelXPModifier / 100;
-	local perkLevel             = forageSystem.getPerkLevel(_character, _itemDef);
-	local diminishingReturn     = 1 - ((perkLevel - _itemDef.skill) * levelXPModifier);
-	--
-	xpAmount = math.max((xpAmount * globalXPModifier) * diminishingReturn, 1);
-	for _, perk in ipairs(_itemDef.perks) do
-		pfPerk = Perks.FromString(perk);
-		if pfPerk then
-			currentXP = _character:getXp():getXP(pfPerk);
-			addXp(_character, pfPerk, xpAmount);
-		end;
+function forageSystem.itemFound(_character, _itemType, _distanceTravelled)
+	local itemDef = forageSystem.itemDefs[_itemType];
+	if itemDef then
+		forageSystem.giveXP(_character, itemDef, _distanceTravelled);
 	end;
 end
 
---[[--======== doEndurancePenalty ========--
-	@param _character - IsoPlayer
-	@param _amount - (optional) amount to endure
+function forageSystem.giveXP(_character, _itemDef, _distanceTravelled)
+	local globalXPModifier		= forageSystem.globalXPModifier / 100;
+	local levelXPModifier		= forageSystem.levelXPModifier / 100;
+	local perkLevel				= _character:getPerkLevel(Perks.PlantScavenging);
+	local diminishingReturn		= 1 - ((perkLevel - _itemDef.skill) * levelXPModifier);
+	local xpAmount				= math.max((_distanceTravelled * globalXPModifier) * diminishingReturn, 1);
 
-	Returns endurance level
-]]--
+	addXp(_character, Perks.PlantScavenging, xpAmount);
+end
+
+--function forageSystem.giveItemXP(_character, _itemDef, _amount)
+--	local pfPerk;
+--	--
+--	local xpAmount              = _itemDef.xp * (_amount or 1);
+--	local globalXPModifier      = forageSystem.globalXPModifier / 100;
+--	local levelXPModifier       = forageSystem.levelXPModifier / 100;
+--	local perkLevel             = forageSystem.getPerkLevel(_character, _itemDef);
+--	local diminishingReturn     = 1 - ((perkLevel - _itemDef.skill) * levelXPModifier);
+--	--
+--	xpAmount = math.max((xpAmount * globalXPModifier) * diminishingReturn, 1);
+--	for _, perk in ipairs(_itemDef.perks) do
+--		pfPerk = Perks.FromString(perk);
+--		if pfPerk then
+--			addXp(_character, pfPerk, xpAmount);
+--		end;
+--	end;
+--end
 
 function forageSystem.doEndurancePenalty(_character, _amount)
-	local enduranceLevel = _character:getStats():getEndurance();
+	local enduranceLevel = _character:getStats():get(CharacterStat.ENDURANCE);
 	enduranceLevel = enduranceLevel - (_amount or forageSystem.endurancePenalty);
-	_character:getStats():setEndurance(enduranceLevel);
+	_character:getStats():set(CharacterStat.ENDURANCE, enduranceLevel);
 	return enduranceLevel;
 end
 
---[[--======== doFatiguePenalty ========--
-	@param _character - IsoPlayer
-	@param _amount - (optional) amount to fatigue
-
-	Returns fatigue level
-]]--
-
 function forageSystem.doFatiguePenalty(_character, _amount)
-	local fatigueLevel = _character:getStats():getFatigue();
+	local fatigueLevel = _character:getStats():get(CharacterStat.FATIGUE);
 	fatigueLevel = fatigueLevel + (_amount or forageSystem.fatiguePenalty);
-	_character:getStats():setFatigue(fatigueLevel);
+	_character:getStats():set(CharacterStat.FATIGUE, fatigueLevel);
 	return fatigueLevel;
 end
 
@@ -2649,19 +2175,13 @@ function forageSystem.doGlassesCheck(_character, _skillDef, _bonusEffect)
 			["Base.Glasses_Normal"]     = true,
 			["Base.Glasses_Reading"]    = true,
 		};
-		local wornItem = _character:getWornItem("Eyes");
+		local wornItem = _character:getWornItem(ItemBodyLocation.EYES);
 		if wornItem and visualAids[wornItem:getFullType()] then
 			return false;
 		end;
 	end;
 	return true;
 end
-
---[[---------------------------------------------
---
---[[--======== Spawn Functions ========--]]--
---
---]]---------------------------------------------
 
 function forageSystem.doPoisonItemSpawn(_character, _inventory, _itemDef, _items)
 	if _itemDef.poisonChance and _itemDef.poisonPowerMin and _itemDef.poisonPowerMax then

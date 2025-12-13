@@ -1,26 +1,16 @@
--------------------------------------------------
--------------------------------------------------
---
--- ISZoneDisplay
---
--- eris
---
--------------------------------------------------
--------------------------------------------------
 local zdImage = ISPanel:derive("zdImage");
 ISZoneDisplay = ISPanel:derive("ISZoneDisplay");
 local UI_BORDER_SPACING = 10
 local GHC = getCore():getGoodHighlitedColor()
 local BHC = getCore():getBadHighlitedColor()
--------------------------------------------------
--------------------------------------------------
+
 local zdTex = {
 	eyeconOn			= getTexture("media/ui/foraging/eyeconOn.png"),
-	--
+
 	infoBtn				= getTexture("media/ui/foraging/questionMark.png"),
 	prevBtn				= getTexture("media/ui/inventoryPanes/Button_GuideP.png"),
 	nextBtn				= getTexture("media/ui/inventoryPanes/Button_GuideN.png"),
-	--
+
 	celestial = {
 		stars			= getTexture("media/ui/foraging/stars.png"),
 	},
@@ -67,8 +57,7 @@ local zdTex = {
 		fog3			= getTexture("media/ui/foraging/Fog3.png"),
 	},
 };
--------------------------------------------------
--------------------------------------------------
+
 ISZoneDisplay.tips = {
 	{ --unlocking new tips
 		level           = 0,
@@ -183,11 +172,9 @@ ISZoneDisplay.fuzzyChanceTable = {
 	[6] = {text = getText"Sandbox_Rarity_option6", chance = 50},
 	[7] = {text = getText"Sandbox_Rarity_option7", chance = 1000},
 };
--------------------------------------------------
--------------------------------------------------
+
 local sin, antiPi = math.sin, 0-math.pi;
--------------------------------------------------
--------------------------------------------------
+
 function ISZoneDisplay:toggleTips()
 	self.tipPanel:setVisible(not self.tipPanel:getIsVisible());
 	self:showTip(ISZoneDisplay.tips[self.currentTip]);
@@ -272,8 +259,6 @@ function ISZoneDisplay:updateTips()
 	end;
 end
 
--------------------------------------------------
--------------------------------------------------
 function ISZoneDisplay:getHoursBetween(_start, _finish)
 	local start = _start;
 	local finish = _finish;
@@ -321,8 +306,7 @@ function ISZoneDisplay:updateMoonPosition()
 	self.moon:setX(math.max(self.width - self.moon:getWidth() - (self.width * nightRatio), 0));
 	self.moon:setY(math.max( height + (height * sin(nightRatio * antiPi)), 0));
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISZoneDisplay:updateSunPosition()
 	local dayLength;
 	local dayRemaining;
@@ -338,8 +322,7 @@ function ISZoneDisplay:updateSunPosition()
 	self.sun:setX(math.max(self.width - self.sun:getWidth() - (self.width * dayRatio), 0));
 	self.sun:setY(math.max( height + (height * sin(dayRatio * antiPi)), 0));
 end
--------------------------------------------------
--------------------------------------------------
+
 local function getZoneType(_x, _y)
 	local zones = getWorld():getMetaGrid():getZonesAt(_x, _y, 0);
 
@@ -355,8 +338,7 @@ local function getZoneType(_x, _y)
 	end;
 	return "Unknown";
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISZoneDisplay:canSeeThroughObject(_object)
 	if (not _object) or _object:getObjectIndex() == -1 then return false; end;
 	local object = _object;
@@ -371,8 +353,8 @@ function ISZoneDisplay:canSeeThroughObject(_object)
 		end;
 	end;
 	if instanceof(object, "IsoDoor") then
-		if object:getProperties() and object:getProperties():Is("doorTrans") then
-			if not object:getProperties():Is("GarageDoor") then
+		if object:getProperties() and object:getProperties():has("doorTrans") then
+			if not object:getProperties():has("GarageDoor") then
 				local curtains = object:HasCurtains();
 				if curtains then
 					if curtains:IsOpen() then
@@ -441,8 +423,7 @@ function ISZoneDisplay:canSeeOutside()
 	end;
 	return false;
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISZoneDisplay:updateLocation()
 	if (not self.canSeeSky) then
 		self.sun:setAlphaTarget(0);
@@ -486,8 +467,7 @@ function ISZoneDisplay:updateLocation()
 	--if we cannot find a valid zone here, show the dreaded questionmarks
 	if not foundZone then self.fadeElements["Unknown"]:setAlphaTarget(1); end;
 end
--------------------------------------------------
--------------------------------------------------
+
 local function formatPercent(_float)
 	return string.format("%+.2f", _float * 100);
 end
@@ -534,8 +514,7 @@ function ISZoneDisplay:getVisionTooltipText()
 	end;
 	return text;
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISZoneDisplay:getZoneTooltipText()
 	local fuzzyChanceTable = ISZoneDisplay.fuzzyChanceTable;
 	local text = "";
@@ -619,8 +598,7 @@ function ISZoneDisplay:getZoneTooltipText()
 	end;
 	return text;
 end
--------------------------------------------------
--------------------------------------------------
+
 local function isMouseOverElement(_element)
 	--prevent tooltips appearing above the world map when the foraging info ui is open underneath
 	if (ISWorldMap_instance and ISWorldMap_instance:isVisible()) then return false; end;
@@ -658,7 +636,7 @@ function ISZoneDisplay:updateTooltip()
 		end;
 		--
 		if isMouseOverElement(self) or tooltipForced ~= nil then
-			if isMouseOverElement(self.visionBonuses) or tooltipForced == "Vision" then
+			if isMouseOverElement(self.visionBonuses) or (tooltipForced and self.parent.tooltipForced == "Vision") then
 				self.tooltip:setName(getText("IGUI_SearchMode_Vision_Effect_Title"));
 				self.tooltip.description = self:getVisionTooltipText();
 			elseif isMouseOverElement(self.infoBtn) then
@@ -690,8 +668,7 @@ function ISZoneDisplay:updateTooltip()
 		end;
 	end;
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISZoneDisplay:update()
 	if (not self:getIsVisible()) then return; end;
 	self:updateData();
@@ -724,8 +701,7 @@ function ISZoneDisplay:update()
 	if self.updateTick % 30 == 0 then self.fogStep = ZombRand(3) + 1; end;
 	if self.updateTick >= self.updateTickMax then self.updateTick = 0; end;
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISZoneDisplay:isLeapYear(_yearNum)
 	return (_yearNum % 4 == 0) and ((_yearNum % 400 == 0) or (_yearNum % 100 ~= 0));
 end
@@ -733,8 +709,7 @@ end
 function ISZoneDisplay:updateMoonPhase()
 	self.moon.texture = zdTex.moons["moon"..self.climateMoon:getCurrentMoonPhase()];
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISZoneDisplay:updateData()
 	local gameTime = self.gameTime;
 	local climateManager = self.climateManager;
@@ -774,8 +749,7 @@ function ISZoneDisplay:updateData()
 	self.clouds:setGreyscale( math.max(1 - self.cloudIntensity, 0.1));
 	self:updateMoonPhase();
 	end
--------------------------------------------------
--------------------------------------------------
+
 function ISZoneDisplay:initialise()
 	ISPanel.initialise(self);
 	self:initialiseImages(zdTex.celestial, self.width, self.height, true)
@@ -840,8 +814,7 @@ function ISZoneDisplay:initialiseImages(imageTable, width, height, fade)
 		end
 	end;
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISZoneDisplay:close()    self:setVisible(false); self:removeFromUIManager();     end;
 
 function ISZoneDisplay:new(_parent)
@@ -909,15 +882,12 @@ function ISZoneDisplay:new(_parent)
 
 	return o;
 end
--------------------------------------------------
--------------------------------------------------
+
 function zdImage:initialise()         ISPanel.initialise(self);   end;
 function zdImage:getAlpha()           return self.backgroundColor.a;    end;
 function zdImage:getAlphaTarget()     return self.alphaTarget;          end;
 function zdImage:setAlpha(_a)         self.backgroundColor.a = _a;      end;
 function zdImage:setAlphaTarget(_a)   self.alphaTarget = _a;            end;
--------------------------------------------------
--------------------------------------------------
 
 function zdImage:setGreyscale(_rgb)
 	self.backgroundColor.r = _rgb;
@@ -930,8 +900,7 @@ function zdImage:setColor(_r,_g,_b)
 	self.backgroundColor.g = _g;
 	self.backgroundColor.b = _b;
 end
--------------------------------------------------
--------------------------------------------------
+
 function zdImage:update()
 	self:setAlpha(luautils.lerp(self:getAlpha(), self:getAlphaTarget(), self.alphaStep, 0.001));
 end
@@ -944,8 +913,7 @@ function zdImage:render()
 
 	self:clearStencilRect();
 end
--------------------------------------------------
--------------------------------------------------
+
 function zdImage:new(zoneDisplay, x, y, width, height, texture)
 	local o = {};
 	o = ISPanel:new(x, y, width, height);
@@ -964,5 +932,3 @@ function zdImage:new(zoneDisplay, x, y, width, height, texture)
 	o.alphaStep = 0.1;
 	return o;
 end
--------------------------------------------------
--------------------------------------------------

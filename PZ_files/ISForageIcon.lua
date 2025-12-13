@@ -1,36 +1,16 @@
---[[---------------------------------------------
--------------------------------------------------
---
--- ISForageIcon
---
--- eris
---
--------------------------------------------------
---]]---------------------------------------------
 require "Foraging/forageSystem";
 require "ISUI/ISPanel";
 require "Foraging/ISBaseIcon";
 ISForageIcon = ISBaseIcon:derive("ISForageIcon");
--------------------------------------------------
--------------------------------------------------
+
 function ISForageIcon:onRightMouseUp()		return self:doContextMenu();							end;
 function ISForageIcon:onRightMouseDown()	return (self:getIsSeen() and self:getAlpha() > 0);		end;
--------------------------------------------------
--------------------------------------------------
-function ISForageIcon:onClickDiscard(_x, _y, _contextOption)
-	if _contextOption then _contextOption:hideAndChildren(); end;
-	local targetSquare = getCell():getGridSquare(self.xCoord, self.yCoord, self.zCoord);
-	if not targetSquare then return; end;
-	--
-	local itemTypeList = {}
-	ISTimedActionQueue.add(ISForageAction:new(self.character, self.iconID, itemTypeList, self.character:getInventory(), true, self.itemType));
-end
 
 function ISForageIcon:doForage(_x, _y, _contextOption, _targetContainer)
 	if _contextOption then _contextOption:hideAndChildren(); end;
 	local targetSquare = getCell():getGridSquare(self.xCoord, self.yCoord, self.zCoord);
 	if not targetSquare then return; end;
-	--
+
 	--double clicking sends item to currently selected inventory in panel
 	if self:getIsSeen() and self:getAlpha() > 0 then
 		local targetContainer = _targetContainer or getPlayerInventory(self.player).inventory or self.character:getInventory();
@@ -40,15 +20,14 @@ function ISForageIcon:doForage(_x, _y, _contextOption, _targetContainer)
 			    for i = 0, self.itemList:size() - 1 do
 			        table.insert(itemTypeList, self.itemList:get(i):getType());
                 end;
-				ISTimedActionQueue.add(ISForageAction:new(self.character, self.iconID, itemTypeList, targetContainer, false, self.itemType));
+				ISTimedActionQueue.add(ISForageAction:new(self.character, self.iconID, itemTypeList, targetContainer, self.itemType));
 			end;
 		end;
 	else
 		return false;
 	end;
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISForageIcon:getNewCategoryItem(_catDef, _zoneData)
 	local perkLevel = self.character:getPerkLevel(Perks.FromString(_catDef.identifyCategoryPerk));
 	if perkLevel < _catDef.identifyCategoryLevel then return; end;
@@ -114,8 +93,7 @@ function ISForageIcon:doSearchFocusCheck()
 		triggerEvent("onUpdateIcon", self.zoneData, self.iconID, self);
 	end;
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISForageIcon:updatePinIconPosition()
 	self:updateZoom();
 	self:updateAlpha();
@@ -124,8 +102,7 @@ function ISForageIcon:updatePinIconPosition()
 	self:setY(isoToScreenY(self.player, self.xCoord, self.yCoord, self.zCoord) + dy + (self.pinOffset / self.zoom));
 	self:setY(self.y - (30 / self.zoom) - (self.height) + (math.sin(self.bounceStep) * self.bounceHeight));
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISForageIcon:checkIsForageable()
 	self.isForageable = forageSystem.isForageable(self.character, self.itemDef, self.zoneDef);
 	return self.isForageable;
@@ -144,7 +121,7 @@ function ISForageIcon:initialise()
 	ISBaseIcon.initialise(self);
 	self.perkLevel = forageSystem.getPerkLevel(self.character, self.itemDef);
 	self:checkIsIdentified();
-	--
+
 	if self.altWorldTexture then
 		self.renderWorldIcon = self.renderAltWorldTexture;
 		self:initAltTexture();
@@ -153,13 +130,12 @@ function ISForageIcon:initialise()
 	elseif self.itemTexture then
 		self.renderWorldIcon = self.renderWorldItemTexture;
 	end;
-	--
+
 	self:findTextureCenter();
 	self:findPinOffset();
 	self:initItemCount();
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISForageIcon:new(_manager, _forageIcon, _zoneData)
 	local forageIcon = _forageIcon;
 	local zoneData = _zoneData;
@@ -199,5 +175,3 @@ function ISForageIcon:new(_manager, _forageIcon, _zoneData)
 	o:initialise();
 	return o;
 end
--------------------------------------------------
--------------------------------------------------

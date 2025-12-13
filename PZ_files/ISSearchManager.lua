@@ -1,27 +1,15 @@
--------------------------------------------------
--------------------------------------------------
---
--- ISSearchManager
---
--- eris
---
--------------------------------------------------
--------------------------------------------------
 require "Foraging/forageSystem";
 require "ISUI/ISPanel";
--------------------------------------------------
--------------------------------------------------
+
 local eyeTex = {
 	eyeconOn = getTexture("media/ui/foraging/eyeconOn.png"),
 	eyeconOff = getTexture("media/ui/foraging/eyeconOff.png"),
 };
--------------------------------------------------
--------------------------------------------------
+
 local getTimestampMs = getTimestampMs;
 local math = math;
 local table = table;
--------------------------------------------------
--------------------------------------------------
+
 local function iterList(_list)
 	local list = _list;
 	local size = list:size() - 1;
@@ -42,13 +30,11 @@ end
 local function getDistance2D(_x1, _y1, _x2, _y2)
 	return math.sqrt(math.abs(_x2 - _x1)^2 + math.abs(_y2 - _y1)^2);
 end
--------------------------------------------------
--------------------------------------------------
+
 LuaEventManager.AddEvent("onToggleSearchMode");
 LuaEventManager.AddEvent("onEnableSearchMode");
 LuaEventManager.AddEvent("onDisableSearchMode");
--------------------------------------------------
--------------------------------------------------
+
 ISSearchManager         			    = ISPanel:derive("ISSearchManager");
 ISSearchManager.players 			    = {};
 ISSearchManager.showDebug 			    = false;
@@ -56,18 +42,16 @@ ISSearchManager.showDebugLocations	    = false;
 ISSearchManager.showDebugExtended	    = false;
 ISSearchManager.showDebugVision		    = false;
 ISSearchManager.showDebugVisionRadius   = false;
--------------------------------------------------
--------------------------------------------------
+
 ISSearchManager.updateEvents          = {
 	{ method = "updateCurrentZone",      tick = 10 },
 	{ method = "checkActiveZones",       tick = 30 },
-	{ method = "updateForceFindSystem",  tick = 10 },
+	{ method = "updateLocationTracking", tick = 10 },
 	{ method = "checkIcons",             tick = 5 },
 	{ method = "checkSquares",           tick = 5 },
 	{ method = "checkWorldIcons",        tick = 5 },
 };
--------------------------------------------------
--------------------------------------------------
+
 --containers matching these types will be detected as a stash
 ISSearchManager.stashTypes              = {
 	["ShotgunBox"]	= true,
@@ -80,8 +64,7 @@ ISSearchManager.ignoredItemTypes        = {
 	["Base.UnusableWood"]   = true,
 	["Base.UnusableMetal"]  = true,
 };
--------------------------------------------------
--------------------------------------------------
+
 function ISSearchManager.getManager(_character)
 	if not ISSearchManager.players[_character] then
 		ISSearchManager.setManager(_character, ISSearchManager:new(_character));
@@ -95,13 +78,10 @@ function ISSearchManager.setManager(_character, _manager)
 	end;
 	ISSearchManager.players[_character] = _manager;
 end;
--------------------------------------------------
--------------------------------------------------
+
 function ISSearchManager:onMouseDown()		 return false; 							end;
 function ISSearchManager:onRightMouseUp() 	 return false; 							end;
 function ISSearchManager:onRightMouseDown()  return false; 							end;
--------------------------------------------------
--------------------------------------------------
 function ISSearchManager:getAlpha()			 return self.textureColor.a; 			end;
 function ISSearchManager:getColor()			 return self.textureColor; 				end;
 function ISSearchManager:setAlpha(_a)		 self.textureColor.a = _a;				end;
@@ -109,8 +89,7 @@ function ISSearchManager:setColor(_rgba) 	 self.textureColor = _rgba;				end;
 function ISSearchManager:flashEye(_amount)
 	self.textureColor.a = math.max(_amount or 1, self.textureColor.a);
 end;
--------------------------------------------------
--------------------------------------------------
+
 function ISSearchManager:onToggleVisible()
 	if self:getIsVisible() then
 		self:addToUIManager();
@@ -119,8 +98,7 @@ function ISSearchManager:onToggleVisible()
 	end;
 	self:update();
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISSearchManager:getScreenDelta() return -getPlayerScreenLeft(self.player), -getPlayerScreenTop(self.player); end;
 function ISSearchManager:updateZoom() self.zoom = getCore():getZoom(self.player); 	end;
 
@@ -141,11 +119,9 @@ function ISSearchManager:updateTimestamp()
 	--
 	self.lastTimestamp = self.currentTimestamp;
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISSearchManager:prerender() end;
--------------------------------------------------
--------------------------------------------------
+
 function ISSearchManager:renderEye()
 	local tc = self.textureColor;
 	self:drawTextureScaled(self.texture, 0, 0, self.textureWidth, self.textureHeight, tc.a, tc.r, tc.g, tc.b);
@@ -227,8 +203,7 @@ function ISSearchManager:renderDebugInfo()
 		end;
 	end;
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISSearchManager:isIconOnSquare(_square, _iconList)
 	if not (_square and _iconList) then return; end;
 	for iconID, icon in pairs(_iconList) do
@@ -236,8 +211,7 @@ function ISSearchManager:isIconOnSquare(_square, _iconList)
 	end;
 	return false;
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISSearchManager:clearSpriteCheckedSquares()
 	table.wipe(self.spriteCheckedSquares);
 end
@@ -293,8 +267,7 @@ function ISSearchManager:removeItem(_icon)
 	forageClient.updateIcon(_icon.zoneData, _icon.iconID, nil);
 	forageClient.updateZone(_icon.zoneData);
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISSearchManager:addIcon(_id, _iconClass, _itemType, _itemObj, _x, _y, _z)
 	local id = _id or getRandomUUID();
 	--create icon class/category if it does not exist so it can be managed/removed
@@ -344,8 +317,7 @@ function ISSearchManager:removeIcon(_icon)
 	end;
 	_icon:removeFromUIManager();
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISSearchManager:checkForSpriteAffinity(_square, _object, _zoneData)
 	local spriteName, spriteCategory, catDef;
 	local spriteAffinities = self.spriteAffinities;
@@ -392,9 +364,11 @@ function ISSearchManager:checkForSpriteAffinity(_square, _object, _zoneData)
 					doSpriteCheck = false;
 					if ZombRandFloat(0.0, 100.0) < catDef.chanceToMoveIcon then
 						self:findSpriteAffinityIcon(_square, catDef, _zoneData);
+                        self.affinityAddedChunks[_square:getChunk()] = true;
 						break;
 					elseif ZombRandFloat(0.0, 100.0) < catDef.chanceToCreateIcon then
 						self:createBonusIcon(_square, catDef, _zoneData);
+                        self.affinityAddedChunks[_square:getChunk()] = true;
 						break;
 					end;
 				end;
@@ -529,8 +503,7 @@ function ISSearchManager:findSpriteAffinityIcon(_square, _catDef, _zoneData)
 		end;
 	end;
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISSearchManager:worldItemTest(_itemObj)
 	local itemCategory = _itemObj:getCategory();
 	local itemType = _itemObj:getFullType();
@@ -629,8 +602,6 @@ function ISSearchManager:createIconsForContainers(_square, _object)
 		end;
 	end;
 end
--------------------------------------------------
--------------------------------------------------
 
 function ISSearchManager:checkSquares()
 	local plX, plY = self.character:getX(), self.character:getY();
@@ -668,7 +639,7 @@ function ISSearchManager:checkSquares()
 				for object in iterList(square:getObjects()) do
 					if not instanceof(object, "IsoAnimalTrack") then
 						self:createIconsForContainers(square, object);
-						if doSpriteCheck and (not object:hasModData()) then
+						if doSpriteCheck and (not object:hasModData()) and not self.affinityAddedChunks[square:getChunk()] then
 							self:checkForSpriteAffinity(square, object, zoneData);
 						end;
 					end;
@@ -703,14 +674,6 @@ function ISSearchManager:createIconsForCell()
 		end;
 	end;
 end
--------------------------------------------------
--------------------------------------------------
-function ISSearchManager:checkShouldForceIcon()
-	if self.timeSinceFind < self.timeToMoveIcon then return; end;
-	if self.distanceSinceFind < self.distanceMoveThreshold + self.distanceMoveExtra then return; end;
-	if not self.currentZone then return; end;
-	self:doMoveIconNearPlayer();
-end
 
 function ISSearchManager:getIsSeen(_icon)
 	return self.seenIcons[_icon.iconID];
@@ -721,32 +684,45 @@ function ISSearchManager:spotIcon(_icon)
 	self.lastFoundX = _icon.xCoord;
 	self.lastFoundY = _icon.yCoord;
 	self:resetForceFindSystem();
-	--
+
 	if _icon.itemDef and (not self.xpIcons[_icon.iconID]) then
-		sendIconFound(self.character, _icon.itemType, 0.25)
+		sendIconFound(self.character, _icon.itemType, _icon.distanceSnapshot)
 		self.xpIcons[_icon.iconID] = _icon.iconID;
 	end;
 end
 
-function ISSearchManager:updateForceFindSystem()
+function ISSearchManager:updateLocationTracking()
 	self:updateTimestamp();
-	--only move an icon if the player is in motion
 	if self.character:isPlayerMoving() then
 		local pX, pY = self.lastUpdateX, self.lastUpdateY;
 		self.lastUpdateX, self.lastUpdateY = self.character:getX(), self.character:getY();
-		--prevent player just walking in a circle to find stuff
-		if getDistance2D(pX, pY, self.lastFoundX, self.lastFoundY) > self.distanceMoveThreshold + self.distanceMoveExtra then
-			--increase distance moved tracker value
-			self.distanceSinceFind = self.distanceSinceFind + getDistance2D(pX, pY, self.lastUpdateX, self.lastUpdateY);
+		self.previousDistanceSinceFind = self.distanceSinceFind;
+		self.distanceSinceFind = getDistance2D(pX, pY, self.lastFoundX, self.lastFoundY);
+		self.maxDistanceSinceFind = math.max(self.distanceSinceFind, self.previousDistanceSinceFind);
+		self.movementDelta = self.distanceSinceFind - self.previousDistanceSinceFind;
+		if
+			self.movementDelta > 0
+			and self.maxDistanceSinceFind == self.distanceSinceFind
+			and self.distanceSinceFind > self.distanceMoveThreshold + self.distanceMoveExtra
+		then
 			self:checkShouldForceIcon();
 		end;
 	end;
 end
 
+function ISSearchManager:checkShouldForceIcon()
+    if self.timeSinceFind < self.timeToMoveIcon then return; end;
+    if self.distanceSinceFind < self.distanceMoveThreshold + self.distanceMoveExtra then return; end;
+    if not self.currentZone then return; end;
+    self:doMoveIconNearPlayer();
+end
+
 function ISSearchManager:resetForceFindSystem()
 	self.timeDelta = 0;
 	self.distanceSinceFind = 0;
-	self.timeSinceFind = 0;
+    self.previousDistanceSinceFind = 0;
+    self.maxDistanceSinceFind = 0;
+    self.timeSinceFind = 0;
 
 	self.distanceMoveExtra = ZombRand(20);
 	self.timeToMoveIconExtra = ZombRand(30000);
@@ -754,6 +730,7 @@ function ISSearchManager:resetForceFindSystem()
 	--slow down the icon moving for higher level, as it is less needed for skilled players
 	self.timeToMoveIcon = self.timeToMoveIconMax - (self.perkLevel * self.reducedTimePerLevel) + self.timeToMoveIconExtra;
 end
+
 
 function ISSearchManager:doMoveIconNearPlayer()
 	if not (self.currentZone and self.currentZone.bounds) then self:resetForceFindSystem(); return; end;
@@ -810,8 +787,6 @@ function ISSearchManager:doMoveIconNearPlayer()
 	self:resetForceFindSystem();
 end
 
--------------------------------------------------
--------------------------------------------------
 function ISSearchManager:doMoveIcon(_icon, _x, _y, _z)
 	_icon:removeIsoMarker();
 	_icon:removeWorldMarker();
@@ -1028,8 +1003,7 @@ function ISSearchManager:loadIcons()
 		self.worldIconStack[iconID] = nil;
 	end;
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISSearchManager:updateModifiers()
 	local character			= self.character;
 	--
@@ -1126,8 +1100,7 @@ function ISSearchManager:updateOverlay()
 	--
 	self.searchMode:setEnabled(self.player, self.isSearchMode or self.isEffectOverlay);
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISSearchManager:checkShouldDisable()
 	if ISSearchManager.showDebug then return false; end;
 	local plStats = self.character:getStats();
@@ -1149,8 +1122,7 @@ function ISSearchManager:checkShouldDisable()
 	end;
 	return false;
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISSearchManager:getGameSpeed()
 	if UIManager and UIManager.getSpeedControls then
 		return UIManager.getSpeedControls():getCurrentGameSpeed();
@@ -1260,8 +1232,7 @@ function ISSearchManager:update()
 	--
 	self.isSpotting = false;
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISSearchManager:initialise()
 	ISPanel.initialise(self);
 	self:setVisible(false);
@@ -1270,8 +1241,7 @@ function ISSearchManager:initialise()
 	self:setFollowGameWorld(true);
 	self:setRenderThisPlayerOnly(self.player);
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISSearchManager:new(_character)
 	local o = {};
 	local w, h = eyeTex.eyeconOn:getWidth(), eyeTex.eyeconOn:getHeight();
@@ -1358,15 +1328,20 @@ function ISSearchManager:new(_character)
 
 	o.lastUpdateX			= _character:getX();
 	o.lastUpdateY			= _character:getY();
-	o.distanceSinceFind		= 0;
-	o.lastFoundX			= 0;
-	o.lastFoundY			= 0;
+	o.lastFoundX			= o.lastUpdateX;
+    o.lastFoundY			= o.lastUpdateY;
+    o.lastSpottedX          = o.lastUpdateX;
+    o.lastSpottedY          = o.lastUpdateY;
+    o.distanceSinceFind		= 0;
+    o.maxDistanceSinceFind	= 0;
+    o.maxDistanceBonus  	= 20;
 
 	--sprite affinity
 	o.movedIcons			= {};
 	o.movedIconsSquares		= {};
 	o.checkedSquares		= {};
 	o.spriteCheckedSquares	= {};
+	o.affinityAddedChunks  	= {};
 	o.squareStack			= {};
 	o.squareCheckRate		= 100;
 	o.spriteAffinities      = forageSystem.spriteAffinities;
@@ -1420,8 +1395,7 @@ function ISSearchManager:new(_character)
 	o:initialise();
 	return o;
 end
--------------------------------------------------
--------------------------------------------------
+
 function ISSearchManager.createUI(_player)
 	local character = getSpecificPlayer(_player);
 	if not ISSearchManager.players[character] then
@@ -1444,8 +1418,7 @@ end
 
 Events.OnCreatePlayer.Add(ISSearchManager.createUI);
 Events.OnPlayerDeath.Add(ISSearchManager.destroyUI);
--------------------------------------------------
--------------------------------------------------
+
 function ISSearchManager:toggleSearchMode(_isSearchMode)
 	self.updateTick = 0;
 	--prevent search mode toggle in tutorial
@@ -1464,6 +1437,8 @@ function ISSearchManager:toggleSearchMode(_isSearchMode)
 	if self.isSearchMode then
 		self:update();
 		self:doUpdateEvents(true);
+        self.lastSpottedX = self.character:getX();
+        self.lastSpottedY = self.character:getY();
 		triggerEvent("onEnableSearchMode", self.character, self.isSearchMode);
 	else
 		self.minAlpha = 0;
@@ -1511,8 +1486,7 @@ end
 
 Events.OnGameBoot.Add(ISSearchManager.initBinds);
 Events.OnGameStart.Add(ISSearchManager.OnGameStart);
--------------------------------------------------
--------------------------------------------------
+
 function ISSearchManager.onUpdateIcon(_zoneData, _iconID, _icon)
 	local icon = _icon;
 	local iconID = _iconID;
@@ -1558,8 +1532,7 @@ function ISSearchManager.onUpdateIcon(_zoneData, _iconID, _icon)
 end
 
 Events.onUpdateIcon.Add(ISSearchManager.onUpdateIcon);
--------------------------------------------------
--------------------------------------------------
+
 function ISSearchManager:onEnteredItemType(button, _square, _zoneData, _count)
 	if button.internal == "OK" then
 		local itemType = button.parent.entry:getText();
@@ -1644,30 +1617,29 @@ function ISSearchManager.createDebugSpawnAllContextMenu(_player, _context, _mana
 	local contextMenu = ISContextMenu:getNew(_context);
 	if not contextMenu then return; end;
 
-	local spawnCategorySubOption = _context:addDebugOption("Create Bulk Icons On This Square");
+	local spawnCategorySubOption = _context:addOption("Create Bulk Icons On This Square");
 	contextMenu:addSubMenu(spawnCategorySubOption, contextMenu);
 
 	for catName in pairs(forageSystem.catDefs) do
-		contextMenu:addDebugOption("Create All From " .. catName, _manager, _manager.createAllIconsOnSquare, _square, catName);
+		contextMenu:addOption("Create All From " .. catName, _manager, _manager.createAllIconsOnSquare, _square, catName);
 	end;
-	contextMenu:addDebugOption("Every Possible Forage Icon", _manager, _manager.createAllIconsOnSquare, _square)
+	contextMenu:addOption("Every Possible Forage Icon", _manager, _manager.createAllIconsOnSquare, _square)
 end
 
 function ISSearchManager.createDebugContextMenu(_player, _context, _manager, _square)
 	local contextMenu = ISContextMenu:getNew(_context);
 	if not contextMenu then return; end;
 
-	local forageDebugOption = _context:addDebugOption(getText("IGUI_perks_Foraging"));
+	local forageDebugOption = _context:addOption(getText("IGUI_perks_Foraging"));
 	contextMenu:addSubMenu(forageDebugOption, contextMenu);
 
 	--add test icons
-	contextMenu:addDebugOption("Add Forage Icon Here (x1)", _manager, onClickCreateIcon, _square, 1);
-	contextMenu:addDebugOption("Add Forage Icon Here (x10)", _manager, onClickCreateIcon, _square, 10);
-	contextMenu:addDebugOption("Add Forage Icon Here (x50)", _manager, onClickCreateIcon, _square, 50);
+	contextMenu:addOption("Add Forage Icon Here (x1)", _manager, onClickCreateIcon, _square, 1);
+	contextMenu:addOption("Add Forage Icon Here (x10)", _manager, onClickCreateIcon, _square, 10);
+	contextMenu:addOption("Add Forage Icon Here (x50)", _manager, onClickCreateIcon, _square, 50);
 	ISSearchManager.createDebugSpawnAllContextMenu(_player, contextMenu, _manager, _square)
-	contextMenu:addDebugOption("----------");
-	contextMenu:addDebugOption("Clear And Refresh All Icons In This Zone", _manager, _manager.refreshZoneIcons, _square);
-	contextMenu:addDebugOption("Move All Forage Icons In Zone To This Square", _manager, _manager.moveAllZoneIconsToSquare, _square);
+	contextMenu:addOption("Clear And Refresh All Icons In This Zone", _manager, _manager.refreshZoneIcons, _square);
+	contextMenu:addOption("Move All Forage Icons In Zone To This Square", _manager, _manager.moveAllZoneIconsToSquare, _square);
 end
 
 function ISSearchManager.OnFillWorldObjectContextMenu(_player, _context, _worldObjects)
