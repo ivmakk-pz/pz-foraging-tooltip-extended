@@ -27,7 +27,7 @@ local Colors = FTE_Utils.Colors
 ---@param character IsoGameCharacter
 ---@return number
 local function getHungerBonus(character)
-	local hungerLevel = character:getStats():getHunger();
+	local hungerLevel = character:getStats():get(CharacterStat.HUNGER);
 	local hungerBonus = 1 + ((forageSystem.hungerBonusMax * hungerLevel) / 100);
 	return hungerBonus;
 end

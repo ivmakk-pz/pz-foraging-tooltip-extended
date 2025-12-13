@@ -31,15 +31,21 @@ Update Foraging Tooltip Extended for compatibility with Project Zomboid Build 42
 - [x] Verify `ISSearchManager` API compatibility
 - [x] Test `forageSystem` data access (modifiers, radius calculations)
 - [x] Ensure no breaking changes in patched functions
+- [x] Fix stats API changes (CharacterStat enum)
 
 **Verification Results:**
 - `ISZoneDisplay:getVisionTooltipText()` - No changes, signature identical
 - `ISZoneDisplay:render()` - Function doesn't exist in vanilla (we override from ISUIElement)
 - `ISSearchManager:getOverlayRadius()` - No changes
 - `ISSearchManager:updateModifiers()` - No changes, modifiers structure identical
-- `forageSystem` API - All functions present and unchanged:
+- `forageSystem` API - All functions and data present:
   - `hungerBonusMax`, `getWeatherEffectReduction()`, `getDarknessEffectReduction()`, `getCategoryBonus()`
-- **Conclusion:** No code changes required, all patches compatible with b42.13
+  - `clothingPenalties` table - Present with same structure
+  - `catDefs` table - Present with same structure
+- **Breaking Change Found:** Stats API changed
+  - OLD: `character:getStats():getHunger()`
+  - NEW: `character:getStats():get(CharacterStat.HUNGER)`
+  - FIXED: Updated `FTE_CoreTooltip.lua` line 30
 
 ### 3. Code Updates
 - [ ] Update mod version to `2.1.0` in `mod.info`
