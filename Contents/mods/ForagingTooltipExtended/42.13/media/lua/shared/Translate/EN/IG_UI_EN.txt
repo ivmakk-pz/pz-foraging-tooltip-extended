@@ -1,0 +1,6 @@
+IGUI_FTE_EN = {
+    IGUI_FTE_SearchMode_Vision_Effect_Base_Skill_Traits = "Base (Skill + Traits)",
+    IGUI_FTE_SearchMode_Vision_Effect_Exhaustion = "Exhaustion",
+    IGUI_FTE_SearchMode_Vision_Effect_Body_Damage = "Body Damage",
+    IGUI_FTE_Food_Detection_Header = "Food Detection",
+}

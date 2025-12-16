@@ -28,9 +28,17 @@ This prompt automates the release process for your mod. Execute these steps in o
 ## Step 3: Update Version References
 Update version in these files:
 
-1. **mod.info**: Update `modversion=` field
+1. **mod.info files** (BOTH version folders):
+   - `Contents/mods/ForagingTooltipExtended/42.13/mod.info` (Build 42.13+)
+   - `Contents/mods/ForagingTooltipExtended/42.12/mod.info` (Build 42.12.x)
+   - Update `modversion=` field in both files to keep versions consistent
+
 2. **README.md**: Update version badge `![Mod Version](https://img.shields.io/badge/Version-<VERSION>-blue)`
-3. **FTE_Utils.lua**: Update `FTE_Utils.MOD_VERSION` constant
+
+3. **FTE_Utils.lua** (Build 42.13+ only):
+   - `Contents/mods/ForagingTooltipExtended/42.13/media/lua/client/FTE_Utils.lua`
+   - Update `FTE_Utils.MOD_VERSION` constant
+   - Note: 42.12 folder has its own FTE_Utils.lua at v2.0.0 (do not modify unless backporting)
 
 ## Step 4: Validation
 - Verify all files have consistent version numbers

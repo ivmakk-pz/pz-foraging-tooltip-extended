@@ -1,0 +1,11 @@
+name=Foraging Tooltip Extended
+id=Ivmakk_ForagingTooltipExtended
+poster=poster.png
+icon=icon.png
+author=ivmakk
+description=Detailed tooltips for foraging radius calculation and used modifiers.
+tags=Build 42
+modversion=2.1.1
+incompatible=\DisplayAllForagingEffects
+versionMin=42.12.0
+versionMax=42.12.99

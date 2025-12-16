@@ -9,9 +9,25 @@ Based on the official Project Zomboid wiki specifications: https://pzwiki.net/wi
 ## File Requirements
 
 - **File name**: Must be `mod.info` (lowercase for Linux/macOS compatibility)
-- **Location**: Must be placed in the mod folder (versioning folder recommended)
+- **Location**: Must be placed in each versioning folder (e.g., `42/mod.info`, `42.12/mod.info`)
 - **Format**: Simple text file with `.info` extension
 - **Encoding**: UTF-8
+
+## Multi-Version Support
+
+Our mod uses multiple version folders with separate mod.info files:
+
+- **`42.13/mod.info`**: For Build 42.13+ players
+  - `modversion`: Current development version (e.g., 2.1.1)
+  - `versionMin`: 42.13 (minimum supported game version)
+  - No `versionMax` (works with all future 42.13+ versions)
+
+- **`42.12/mod.info`**: For Build 42.12.x players
+  - `modversion`: Same as 42.13 folder to avoid confusion (e.g., 2.1.1)
+  - `versionMin`: 42.12.0
+  - `versionMax`: 42.12.99 (explicitly limited to 42.12.x)
+
+Both files share the same `modversion` to prevent player confusion about which version they're using
 
 ## Required Parameters
 

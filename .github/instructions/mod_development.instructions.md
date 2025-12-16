@@ -8,16 +8,38 @@ This workspace contains multiple directory structures with different purposes:
 
 ### Main Development Directory
 - **`Contents/mods/ForagingTooltipExtended/`** - Our main code folder where all development work happens
-  - Contains your mod files and all new features, modifications, and implementations
+  - Contains version-specific folders for multi-version support
+  - **`42.13/`** - Current development version for Build 42.13+ (v2.1.0+)
+  - **`42.12/`** - Stable version for Build 42.12.x (v2.0.0, read-only copy)
+  - **`common/`** - Shared assets across versions (required but currently empty)
 
-### Modular Architecture (as of v1.2.0)
+### Modular Architecture (as of v2.0.0)
 
 The mod follows a modular architecture pattern with clear separation of concerns:
 
 ```
-Contents/mods/ForagingTooltipExtended/42/media/lua/client/
-├── FTE_Client.lua                    # Main entry point (slim orchestrator)
-├── FTE_Utils.lua                     # Logging, colors, formatting utilities
+Contents/mods/ForagingTooltipExtended/
+├── 42.13/                            # Build 42.13+ version (active development)
+│   ├── media/lua/client/
+│   │   ├── FTE_Client.lua            # Main entry point (slim orchestrator)
+│   │   ├── FTE_Utils.lua             # Logging, colors, formatting utilities
+│   │   ├── FTE_ModOptions.lua        # Mod options configuration
+│   │   ├── Core/
+│   │   │   └── FTE_ModuleBase.lua    # Base class for all feature modules
+│   │   └── Modules/
+│   │       ├── FTE_CoreTooltip.lua   # Core tooltip enhancements (mandatory)
+│   │       ├── FTE_ViewDistance.lua  # View distance calculations (optional)
+│   │       └── FTE_SearchRadiusDisplay.lua  # Persistent radius display
+│   ├── mod.info                      # Mod metadata for Build 42.13+
+│   └── poster.png, icon.png          # Assets
+│
+├── 42.12/                            # Build 42.12.x version (v2.0.0 stable)
+│   ├── media/lua/client/             # Same structure as 42.13/ but v2.0.0 code
+│   ├── mod.info                      # Mod metadata for Build 42.12.x
+│   └── poster.png, icon.png          # Assets
+│
+└── common/                           # Shared assets (required, currently empty)
+```
 ├── FTE_ModOptions.lua                # Mod options configuration
 │
 ├── Core/
@@ -55,7 +77,17 @@ All feature modules follow this pattern:
 - **`workshop_assets/`** - Steam Workshop assets and metadata
 - **Root files** - Mod documentation and configuration (README.md, CHANGELOG.md, etc.)
 
-When developing features, always work in the `Contents/mods/ForagingTooltipExtended/` directory. New features should be implemented as modules in the `Modules/` folder extending `FTE_ModuleBase`.
+### Development Workflow
+
+**Active Development:**
+- Work in `Contents/mods/ForagingTooltipExtended/42.13/` folder for Build 42.13+ features
+- New features should be implemented as modules in `42.13/media/lua/client/Modules/` extending `FTE_ModuleBase`
+- Update `42.13/mod.info` with version changes
+
+**Legacy Version Maintenance:**
+- `42.12/` folder is a **read-only copy** of v2.0.0 for Build 42.12.x players
+- Do NOT modify `42.12/` unless backporting critical fixes
+- This folder ensures stable experience for players on Build 42.12.x
 
 ## Function Documentation Guidelines:
 - Use LuaLS/EmmyLua type annotations for all functions (---@param, ---@return, ---@type).

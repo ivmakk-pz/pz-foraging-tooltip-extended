@@ -1,5 +1,5 @@
 ---
-mode: agent
+agent: agent
 ---
 
 # Add Localization for [Language]
@@ -16,8 +16,12 @@ Create translation files for the specified language by translating all text from
 
 ## Reference Files
 Use these English files as the translation source:
-- `Contents/mods/ForagingTooltipExtended/42/media/lua/shared/Translate/EN/IG_UI_EN.txt`
-- `Contents/mods/ForagingTooltipExtended/42/media/lua/shared/Translate/EN/UI_EN.txt`
+- `Contents/mods/ForagingTooltipExtended/42.13/media/lua/shared/Translate/EN/IG_UI_EN.txt` (Build 42.13+ version)
+- `Contents/mods/ForagingTooltipExtended/42.13/media/lua/shared/Translate/EN/UI_EN.txt` (Build 42.13+ version)
+
+Note: Translation files should be added to BOTH version folders:
+- `Contents/mods/ForagingTooltipExtended/42.13/media/lua/shared/Translate/{LANGUAGE}/` (Build 42.13+)
+- `Contents/mods/ForagingTooltipExtended/42.12/media/lua/shared/Translate/{LANGUAGE}/` (Build 42.12.x)
 
 ## Expected Output
 Complete, culturally appropriate translations that:

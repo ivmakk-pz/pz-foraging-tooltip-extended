@@ -134,7 +134,7 @@ When developing features, always work in the `Contents/mods/ForagingTooltipExten
 ## Current Implementation Structure
 
 ```
-Contents/mods/ForagingTooltipExtended/42/media/
+Contents/mods/ForagingTooltipExtended/42.13/media/
 ├── lua/
 │   ├── client/
 │   │   ├── FTE_Client.lua                    # Main entry point (orchestrator)

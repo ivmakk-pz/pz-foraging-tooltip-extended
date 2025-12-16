@@ -6,7 +6,7 @@ applyTo: '**/Translate/**/*_*.txt'
 
 ## File Structure and Naming
 - Follow Project Zomboid's standard: `Translate/{language}/{File}_{language}.txt`
-- Create files in: `Contents/mods/ForagingTooltipExtended/42/media/lua/shared/Translate/{LANGUAGE}/`
+- Create files in: `Contents/mods/ForagingTooltipExtended/42.13/media/lua/shared/Translate/{LANGUAGE}/`
 - Required files: `IG_UI_{LANGUAGE}.txt` and `UI_{LANGUAGE}.txt`
 
 ## Supported Language Codes (Build 42)
@@ -90,5 +90,5 @@ UI_FTE_DE = {
 
 ## Reference Files
 Use these English files as translation base:
-- `Contents/mods/ForagingTooltipExtended/42/media/lua/shared/Translate/EN/IG_UI_EN.txt`
-- `Contents/mods/ForagingTooltipExtended/42/media/lua/shared/Translate/EN/UI_EN.txt`
+- `Contents/mods/ForagingTooltipExtended/42.13/media/lua/shared/Translate/EN/IG_UI_EN.txt`
+- `Contents/mods/ForagingTooltipExtended/42.13/media/lua/shared/Translate/EN/UI_EN.txt`
