@@ -24,7 +24,7 @@ description=I couldn't find any working mods for Build 42 that addressed this, s
 description=
 description=[h2]Compatibility[/h2]
 description=[list]
-description=[*]Supported builds: 42.12.x, 42.15.x
+description=[*]Supported builds: 42.12.x, 42.14.x, 42.15.x (tested on SP)
 description=[*]Safe to add/remove mid-game
 description=[*]Compatible with most mods unless they modify the "Vision Effectiveness" tooltip.
 description=[*]Recommended with [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3593442524]Quick Forage Icon Discard [B42][/url]
