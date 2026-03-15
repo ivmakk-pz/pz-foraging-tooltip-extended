@@ -16,5 +16,8 @@
     },
     "Lua.workspace.checkThirdParty": false,
     "files.eol": "\r\n",
-    "files.encoding": "utf8"
+    "files.encoding": "utf8",
+    "json.schemaDownload.trustedDomains": {
+        "https://raw.githubusercontent.com/SirDoggyJvla/pz-translation-data": true
+    }
 }
