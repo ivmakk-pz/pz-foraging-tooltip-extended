@@ -27,7 +27,7 @@ local Colors = FTE_Utils.Colors
 ---@param character IsoGameCharacter
 ---@return number
 local function getHungerBonus(character)
-	local hungerLevel = character:getStats():getHunger();
+	local hungerLevel = character:getStats():get(CharacterStat.HUNGER);
 	local hungerBonus = 1 + ((forageSystem.hungerBonusMax * hungerLevel) / 100);
 	return hungerBonus;
 end
@@ -268,11 +268,11 @@ end
 local function formatCharacterEffectsSection(characterEffects, valueXPos, alignment)
 	local parts = {}
 	
-	-- Filter items that should be displayed
+	-- Filter items that should be displayed (skip all zero-value items)
 	local displayItems = {}
 	for i = 1, #characterEffects do
 		local item = characterEffects[i]
-		if not item.isBonus or item.value ~= 0 then
+		if item.value ~= 0 then
 			table.insert(displayItems, item)
 		end
 	end

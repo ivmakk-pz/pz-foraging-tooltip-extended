@@ -1,6 +1,6 @@
 ﻿# Foraging Tooltip Extended
 
-![Mod Version](https://img.shields.io/badge/Version-2.2.1-blue)
+![Mod Version](https://img.shields.io/badge/Version-2.2.2-blue)
 [![Steam Workshop](https://img.shields.io/badge/Steam%20Workshop-View-blue)](https://steamcommunity.com/sharedfiles/filedetails/?id=3507997225)
 
 A Project Zomboid mod that enhances the foraging tooltip with detailed modifier breakdowns and customizable display options.
@@ -31,8 +31,8 @@ Contents/
                     └── shared/
                         └── Translate/
                             └── EN/
-                                ├── IG_UI_EN.txt
-                                └── UI_EN.txt
+                                ├── IG_UI.json
+                                └── UI.json
 ```
 
 ### Required for Steam Workshop Upload (not downloaded by users):
@@ -72,10 +72,8 @@ Contents/mods/ForagingTooltipExtended/42/media/lua/client/
 │
 └── Modules/
     ├── FTE_CoreTooltip.lua           # Core tooltip enhancements
-    ├── FTE_ViewDistance.lua          # View distance calculations (optional)
     ├── FTE_SearchRadiusDisplay.lua   # Persistent radius display next to eye icon
-    ├── FTE_SearchRadiusVisual.lua    # Visual radius display (future)
-    └── FTE_EquipmentImpact.lua       # Equipment analysis (future)
+    └── FTE_VisionAffectingItems.lua  # Worn-item vision penalties shown in the tooltip
 ```
 
 **Key Benefits:**
@@ -90,8 +88,8 @@ Contents/mods/ForagingTooltipExtended/42/media/lua/client/
 - **FTE_ModOptions.lua**: Handles mod configuration options and user preferences
 - **Core/FTE_ModuleBase.lua**: Base class providing lifecycle hooks and error handling for all modules
 - **Modules/FTE_CoreTooltip.lua**: Main tooltip enhancement logic (hooks into vanilla foraging system)
-- **Modules/FTE_ViewDistance.lua**: Optional view distance calculation system
 - **Modules/FTE_SearchRadiusDisplay.lua**: Displays current search radius before the eye icon in ISZoneDisplay panel
+- **Modules/FTE_VisionAffectingItems.lua**: Worn-item vision penalties shown in the tooltip
 - **Translate files**: Localization strings for UI elements
 
 ### Key Functions & Patterns
@@ -103,7 +101,7 @@ Contents/mods/ForagingTooltipExtended/42/media/lua/client/
 ## Development Setup
 
 ### Prerequisites
-- Project Zomboid Build 42.9+
+- Project Zomboid Build 42.15+
 - Text editor with Lua syntax support (recommended [Visual Studio Code](https://pzwiki.net/wiki/Visual_Studio_Code))
 - Access to Project Zomboid [modding documentation](https://pzwiki.net/wiki/Modding)
 
