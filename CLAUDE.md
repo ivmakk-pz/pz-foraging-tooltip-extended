@@ -6,16 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Foraging Tooltip Extended is a client-side Project Zomboid Build 42 mod. It rewrites the vanilla foraging "Vision Effectiveness" tooltip to break down every modifier affecting search radius, and optionally shows the current radius next to the eye icon during search mode. Pure Lua 5.1 (PZ's embedded runtime) — there is no build, compile, or test step. Files are interpreted directly by the game.
 
-## Versioning and the two release folders
+## Versioning and the release folder
 
-The mod ships multiple version-specific folders under `Contents/mods/ForagingTooltipExtended/`; the game loads the one matching the player's build (see the `versionMin`/`versionMax` in each `mod.info`).
+The mod ships a single version-specific folder, `Contents/mods/ForagingTooltipExtended/42/`, loaded on builds matching the `versionMin`/`versionMax` in its `mod.info` (`versionMin=42.15`, no upper bound, so it also covers 42.20+). Translations are JSON (`UI.json`, `IG_UI.json`) per the 42.15 localization change. Support for builds below 42.15 (the old legacy-`.txt` line) was dropped once 42.20 became the stable target.
 
-- `42/` — Build 42.12 through 42.14. Translations are legacy Lua `.txt` (`UI_EN.txt`, `IG_UI_EN.txt`).
-- `42.15/` — Build 42.15+. This is the **active development target**. Translations are JSON (`UI.json`, `IG_UI.json`) per the 42.15 localization change.
-
-The Lua code in both folders is otherwise the same. When changing behavior, decide whether the fix applies to one build line or both, and mirror it into each folder that needs it. Translation edits must respect each folder's format (`.txt` vs `.json`).
-
-The mod version lives in **two** places that must stay in sync on every release: `modversion=` in each `mod.info`, and `FTE_Utils.MOD_VERSION` in `FTE_Utils.lua`.
+The mod version lives in **two** places that must stay in sync on every release: `modversion=` in `mod.info`, and `FTE_Utils.MOD_VERSION` in `FTE_Utils.lua`.
 
 ## Architecture
 
@@ -58,14 +53,13 @@ Two changelogs are maintained: `CHANGELOG.md` (repo) and `Contents/mods/Foraging
 
 ## Skills (task workflows)
 
-Detailed workflows live as Claude skills in `.claude/skills/` — these are the source of truth, synced from the `pz-mod-template-ivmakk` template repo:
+The generic PZ-modding procedure (game API lookups, code conventions, changelog system, releasing, localization formats, multi-version, build upgrades) lives in the central `pz-modding` skill installed globally at `~/.claude/skills/pz-modding` (synced across machines via chezmoi) - that is the single source of truth for how-to. This repo's `.claude/skills/` carries only thin, mod-specific stubs that record FTE's own facts and defer the procedure to central:
 
-- `pz-modding` — general PZ mod development, game API lookups, code conventions, changelog system.
-- `pz-mod-release` — version bump + three-changelog update + tag/merge workflow.
-- `pz-mod-localization` — adding translations (JSON for 42.15+, Lua `.txt` for 42.14 and earlier).
-- `pz-mod-multi-version` — managing the per-build version folders and `versionMin`/`versionMax`.
-- `pz-mod-upgrade` — upgrading the mod to a newer game build (changelog analysis, API verification, phased plan).
-- `pz-rich-text-markup` — project-specific: the `<RGB>`/`<LINE>`/`<IMAGE>`/`<SETX>` tooltip markup this mod builds its strings with.
+- `pz-mod-release` — FTE's version-reference files, changelog paths, and tag convention; defers to central `references/releasing.md`.
+- `pz-mod-localization` — FTE's `Translate/` paths, key prefixes, and which files exist per version folder; defers to central `references/localization.md`.
+- `pz-rich-text-markup` — project-specific (not in central): the `<RGB>`/`<LINE>`/`<IMAGE>`/`<SETX>` tooltip markup this mod builds its strings with.
+
+Multi-version and build-upgrade workflows are pure procedure with no FTE-specific facts, so they are not duplicated here - central `pz-modding` covers them (its description triggers on those tasks). The thin stubs depend on central being installed; a clone without `~/.claude` gets the facts but not the procedure.
 
 The legacy `.github/copilot-instructions.md`, `.github/instructions/`, and `.github/prompts/` are the older Copilot-format equivalents, kept for teammates still using Copilot. Several were written against an earlier layout (they reference a `42.13/` folder and a since-removed `FTE_ViewDistance` module) — prefer the skills and the actual files in `Contents/` over those docs where they disagree.
 

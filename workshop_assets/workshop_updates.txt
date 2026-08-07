@@ -1,4 +1,10 @@
-﻿v2.2.1 - 2026-03-15
+﻿v2.2.2 - 2026-08-07
+
+Changed
+- Dropped Build 42.12-42.14 support; consolidated to a single 42.15+ version folder
+
+
+v2.2.1 - 2026-03-15
 
 Changed
 - Updated for Build 42.14 compatibility: increased versionMax
