@@ -28,7 +28,11 @@ function ForagingTooltipExtended.init()
     FTE_Utils.logInfo("Client initialization complete")
 end
 
--- Initialize mod options when UI is ready with protection
+-- Register mod options at game boot (before the first main-menu options screen builds).
+-- Registering late (e.g. OnCreateUI, which only fires in-world) leaves the options
+-- unregistered at the title screen, where a title-screen save of another options mod
+-- parks FTE's ini lines without a newline and a vanilla save() bug concatenates them,
+-- corrupting the saved values. Booting early keeps them in Data and always written cleanly.
 function ForagingTooltipExtended.initModOptions()
     local ok, err = pcall(function()
         FTE_ModOptions.initialize()
@@ -45,6 +49,6 @@ end
 -- ===================================================================================================== --
 
 Events.OnGameStart.Add(ForagingTooltipExtended.init)
-Events.OnCreateUI.Add(ForagingTooltipExtended.initModOptions)
+Events.OnGameBoot.Add(ForagingTooltipExtended.initModOptions)
 
 return ForagingTooltipExtended

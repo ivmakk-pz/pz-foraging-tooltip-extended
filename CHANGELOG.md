@@ -1,5 +1,9 @@
 ﻿# Changelog
 
+## [2.2.3] - 2026-08-15
+### Fixed
+- Mod option settings no longer reset to default, and the options now appear in the main-menu Mod Options screen, not only in-game.
+
 ## [2.2.2] - 2026-08-07
 ### Changed
 - Dropped Build 42.12-42.14 support; consolidated to a single 42.15+ version folder
