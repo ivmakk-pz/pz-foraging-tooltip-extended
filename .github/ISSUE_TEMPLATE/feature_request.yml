@@ -1,0 +1,16 @@
+name: Feature request
+description: Suggest an improvement or new capability for Foraging Tooltip Extended.
+type: Feature
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea. Keep it focused on this mod (the foraging vision tooltip breakdown and the search-radius display).
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: What should the mod do, and what makes it worth having? Describe it from a player's point of view.
+    validations:
+      required: true
