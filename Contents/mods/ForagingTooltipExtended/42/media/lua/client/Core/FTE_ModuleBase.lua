@@ -13,7 +13,7 @@ local FTE_Utils = require("FTE_Utils")
 ---@field __destroying boolean
 ---@field crashCount number
 ---@field isBlacklisted boolean
----@field eventHandlers table<string, { event: string, fn: function }>   -- key: event|handler_ptr
+---@field eventHandlers table<string, { event: string, fn: function }>   -- key: eventName::tostring(fn)
 ---@field vanillaOverrides table<string, { target: table, original: function }>
 local FTE_ModuleBase = ISBaseObject:derive("FTE_ModuleBase")
 
