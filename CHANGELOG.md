@@ -2,7 +2,7 @@
 
 ## [2.2.4] - 2026-08-26
 ### Fixed
-- Build 42.20.4 compatibility: reworked the internal module base to remove the deleted `loadstring` function and to key vanilla-function overrides by reference, avoiding a potential override failure on Build 42.20+.
+- Updated for Build 42.20.4 compatibility.
 
 ## [2.2.3] - 2026-08-15
 ### Fixed
