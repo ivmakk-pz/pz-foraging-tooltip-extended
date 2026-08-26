@@ -1,7 +1,10 @@
 name: Release
 on:
   push:
-    tags: ['[0-9]*.[0-9]*.[0-9]*']
+    # GitHub tag filters do NOT support [] character ranges (only * ** ? + !),
+    # so a [0-9] class is matched literally and never fires. Match X.Y.Z loosely;
+    # the "verify tag matches mod.info" step below rejects any non-version tag.
+    tags: ['*.*.*']
 permissions:
   contents: write
 jobs:
