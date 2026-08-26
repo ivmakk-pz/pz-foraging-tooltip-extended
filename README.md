@@ -1,6 +1,6 @@
 # Foraging Tooltip Extended
 
-![Mod Version](https://img.shields.io/badge/Version-2.2.3-blue)
+![Mod Version](https://img.shields.io/badge/Version-2.2.4-blue)
 
 [Steam Workshop page](https://steamcommunity.com/sharedfiles/filedetails/?id=3507997225)
 

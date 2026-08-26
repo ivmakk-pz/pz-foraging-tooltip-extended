@@ -13,7 +13,7 @@ local FTE_Utils = require("FTE_Utils")
 ---@field __destroying boolean
 ---@field crashCount number
 ---@field isBlacklisted boolean
----@field eventHandlers table<string, boolean>   -- key: event|handler_ptr
+---@field eventHandlers table<string, { event: string, fn: function }>   -- key: event|handler_ptr
 ---@field vanillaOverrides table<string, { target: table, original: function }>
 local FTE_ModuleBase = ISBaseObject:derive("FTE_ModuleBase")
 
@@ -26,27 +26,27 @@ local FTE_ModuleBase = ISBaseObject:derive("FTE_ModuleBase")
 ---@return table derivedClass The new module class
 function FTE_ModuleBase:derive(className)
     local derivedClass = ISBaseObject.derive(self, className)
-    
+
     ---Create new instance of the derived module
     ---@return FTE_ModuleBase instance New module instance
     function derivedClass:new()
         local o = ISBaseObject.new(self) --[[@as FTE_ModuleBase]]
-        
+
         o.moduleName       = className
         o.isActiveFlag     = false
-        
+
         o.__initializing   = false
         o.__destroying     = false
-        
+
         o.crashCount       = 0
         o.isBlacklisted    = false
-        
+
         o.eventHandlers    = {}
         o.vanillaOverrides = {}
-        
+
         return o
     end
-    
+
     return derivedClass
 end
 
@@ -54,12 +54,30 @@ end
 -- INTERNAL KEY GENERATION HELPERS
 -- ===================================================================================================== --
 
+-- Stable per-target identity assigned by reference. tostring(target) is unusable
+-- as a key: on B42.19 tostring() of some vanilla class tables recurses and
+-- overflows the stack, and on B42.20 tostring() of a plain table serialises its
+-- mutable contents - including the very function we override - so the key would
+-- change the moment the wrapper is installed and getOriginal() would miss.
+-- Reference-keyed ids are stable regardless of type or content mutation.
+local _targetIds = {}
+local _nextTargetId = 0
+local function _targetId(target)
+    local id = _targetIds[target]
+    if not id then
+        _nextTargetId = _nextTargetId + 1
+        id = "T" .. _nextTargetId
+        _targetIds[target] = id
+    end
+    return id
+end
+
 ---Generate unique key for vanilla function overrides
 ---@param target table The target object containing the function to override
 ---@param fname string The function name being overridden
----@return string key Unique key in format "table:0x123456::functionName"
+---@return string key Unique key in format "<targetId>::functionName"
 local function _ovKey(target, fname)
-    return tostring(target) .. "::" .. fname
+    return _targetId(target) .. "::" .. fname
 end
 
 ---Generate unique key for event handler deduplication
@@ -82,7 +100,7 @@ function FTE_ModuleBase:initialise(setupLogic)
         FTE_Utils.logWarning("[AUTO-DISABLE] " .. self.moduleName .. " is blacklisted - skipping initialization")
         return false
     end
-    
+
     if self.isActiveFlag then return true end
     if self.__initializing then
         FTE_Utils.logWarning(self.moduleName .. " initialise() re-entered - ignored")
@@ -101,9 +119,9 @@ function FTE_ModuleBase:initialise(setupLogic)
         self.isBlacklisted = true
         self.isActiveFlag = false
         self.__initializing = false
-        
+
         FTE_Utils.logError("[AUTO-DISABLE] " .. self.moduleName .. " initialise() failed and has been permanently disabled: " .. tostring(err))
-        
+
         return false
     end
     self.__initializing = false
@@ -119,12 +137,8 @@ function FTE_ModuleBase:destroy()
     end
     self.__destroying = true
 
-    -- Remove events (reverse order for safer cleanup)
-    for key,_ in pairs(self.eventHandlers) do
-        local i = key:find("::", 1, true)
-        local eventName = key:sub(1, i-1)
-        local handlerPtr = key:sub(i+2)
-        pcall(function() Events[eventName].Remove(loadstring("return "..handlerPtr)() or handlerPtr) end)
+    for _, data in pairs(self.eventHandlers) do
+        pcall(function() Events[data.event].Remove(data.fn) end)
     end
     self.eventHandlers = {}
 
@@ -157,7 +171,7 @@ function FTE_ModuleBase:getCrashCount()
 end
 
 -- ===================================================================================================== --
--- EVENT AND OVERRIDE MANAGEMENT METHODS  
+-- EVENT AND OVERRIDE MANAGEMENT METHODS
 -- ===================================================================================================== --
 
 ---Register event handler with deduplication and error wrapping
@@ -179,8 +193,7 @@ function FTE_ModuleBase:registerEvent(eventName, handler)
 
     local ok, err = pcall(function() Events[eventName].Add(safeHandler) end)
     if ok then
-        -- Store wrapper pointer for reliable removal
-        self.eventHandlers[_ehKey(eventName, safeHandler)] = true
+        self.eventHandlers[key] = { event = eventName, fn = safeHandler }
         return true
     else
         FTE_Utils.logError(self.moduleName .. " failed to register "..eventName..": "..tostring(err))
@@ -190,7 +203,7 @@ end
 
 ---Override vanilla function with idempotent wrapping and enhanced auto-restore on crash
 ---@param targetObject table
----@param functionName string  
+---@param functionName string
 ---@param newFunction function
 ---@return boolean success
 function FTE_ModuleBase:overrideFunction(targetObject, functionName, newFunction)
@@ -199,7 +212,7 @@ function FTE_ModuleBase:overrideFunction(targetObject, functionName, newFunction
         FTE_Utils.logWarning("[AUTO-DISABLE] " .. self.moduleName .. " is blacklisted - skipping function override for " .. functionName)
         return false
     end
-    
+
     if not targetObject or type(targetObject[functionName]) ~= "function" or type(newFunction) ~= "function" then
         return false
     end
@@ -216,15 +229,15 @@ function FTE_ModuleBase:overrideFunction(targetObject, functionName, newFunction
     wrapper = function(...)
         local ok, result = pcall(newFunction, ...)
         if ok then return result end
-        
+
         -- Enhanced auto-restore with blacklisting on crash
         self.crashCount = self.crashCount + 1
         self.isBlacklisted = true
         self.isActiveFlag = false
-        
+
         -- Enhanced logging for runtime crashes
         FTE_Utils.logError("[AUTO-DISABLE] " .. self.moduleName .. " override '" .. functionName .. "' crashed and module has been permanently disabled: " .. tostring(result))
-        
+
         -- Auto-restore vanilla on crash and fall back for this call
         targetObject[functionName] = original
         self.vanillaOverrides[key] = nil
