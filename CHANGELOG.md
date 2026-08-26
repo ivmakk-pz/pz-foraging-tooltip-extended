@@ -2,7 +2,7 @@
 
 ## [2.2.4] - 2026-08-26
 ### Fixed
-- Updated for Build 42.20.4 (removed reliance on the now-removed `loadstring` function).
+- Build 42.20.4 compatibility: removed use of "loadstring" function.
 
 ## [2.2.3] - 2026-08-15
 ### Fixed
