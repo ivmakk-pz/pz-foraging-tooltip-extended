@@ -1,5 +1,9 @@
 ﻿# Changelog
 
+## [2.2.4] - 2026-08-26
+### Fixed
+- Build 42.20.4 compatibility: removed use of "loadstring" function.
+
 ## [2.2.3] - 2026-08-15
 ### Fixed
 - Mod option settings no longer reset to default, and the options now appear in the main-menu Mod Options screen, not only in-game.

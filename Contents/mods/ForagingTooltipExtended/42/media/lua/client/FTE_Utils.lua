@@ -8,7 +8,7 @@ local FTE_Utils = {}
 -- ===================================================================================================== --
 
 -- Mod version - Update this during release process
-FTE_Utils.MOD_VERSION = "2.2.3"
+FTE_Utils.MOD_VERSION = "2.2.4"
 
 local PRECISION_THRESHOLD = 0.01
 local PERCENTAGE_MULTIPLIER = 100
